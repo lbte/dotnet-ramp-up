@@ -749,7 +749,7 @@ PRFTLatam. Workshop.Services.Models
 PRFTLatam. Workshop.Infrastructure.Files
 PRFTLatam. Workshop.Services.Logic.Test
 
-![Alt text](hexagonalArchitecture.png)
+![Alt text](media/hexagonalArchitecture.png)
 
 * PRFTLatam. Workshop.Infrastructure: 
     - Create interface (IFileParsing) for the method that will return all the ids from the csv file
@@ -862,7 +862,7 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
 
     a. Mount a database on Azure SQL Server. (https://github.com/Jucer74/SQLCloud)
     * Download SQL Server Express
-        ![sql-express-info](sql-express-info.png)
+        ![sql-express-info](media/sql-express-info.png)
         `Server=localhost\SQLEXPRESS01;Database=master;Trusted_Connection=True;`
     * Download SQL Server Management Studio
     * Add the following to the appsettings.json file located in the webapi project:

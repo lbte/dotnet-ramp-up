@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.Workshop.WebAPI", "PRFTLatam.Workshop.WebAPI\PRFTLatam.Workshop.WebAPI.csproj", "{4F6B460F-18FE-4EE4-865E-893D5C3A0555}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.Workshop.Services", "PRFTLatam.Workshop.Services\PRFTLatam.Workshop.Services.csproj", "{64D4CA65-E45C-4F93-B1B8-D86762DB5418}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.Workshop.Infrastructure", "PRFTLatam.Workshop.Infrastructure\PRFTLatam.Workshop.Infrastructure.csproj", "{E1EFD2DF-4137-4169-BDEF-AFFAC44EC417}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F6B460F-18FE-4EE4-865E-893D5C3A0555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F6B460F-18FE-4EE4-865E-893D5C3A0555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F6B460F-18FE-4EE4-865E-893D5C3A0555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F6B460F-18FE-4EE4-865E-893D5C3A0555}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64D4CA65-E45C-4F93-B1B8-D86762DB5418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64D4CA65-E45C-4F93-B1B8-D86762DB5418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64D4CA65-E45C-4F93-B1B8-D86762DB5418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64D4CA65-E45C-4F93-B1B8-D86762DB5418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1EFD2DF-4137-4169-BDEF-AFFAC44EC417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1EFD2DF-4137-4169-BDEF-AFFAC44EC417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1EFD2DF-4137-4169-BDEF-AFFAC44EC417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1EFD2DF-4137-4169-BDEF-AFFAC44EC417}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
