@@ -22,5 +22,5 @@ public interface IClientService
     /// </summary>
     /// <param name="client">A new client entity</param>
     /// <returns>The created client with an assigned Id</returns>
-    Task <IEnumerable<Client>> CreateClient(Client client);
+    Task <Client> CreateClient(Client client);
 }

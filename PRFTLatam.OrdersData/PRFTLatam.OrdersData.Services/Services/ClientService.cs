@@ -12,18 +12,35 @@ public class ClientService : IClientService
     {
         _unitOfWork = unitOfWork;
     }
-    public Task<IEnumerable<Client>> CreateClient(Client client)
+
+    /// <summary>
+    /// Creates a new <see cref="Client"/> entity in the DB
+    /// </summary>
+    /// <param name="client">A new client entity</param>
+    /// <returns>The created client with an assigned Id</returns>
+    public async Task<Client> CreateClient(Client client)
     {
-        throw new NotImplementedException();
+        await _unitOfWork.ClientRepository.AddAsync(client);
+        await _unitOfWork.SaveAsync();
+        return client;    
     }
 
-    public Task<Client> GetClientById(int id)
+    /// <summary>
+    /// Finds a Client by its id in the DB
+    /// </summary>
+    /// <param name="id">The unique id of the client</param>
+    /// <returns>A <see cref="Client"/></returns>
+    public async Task<Client> GetClientById(int id)
     {
-        throw new NotImplementedException();
+        return await _unitOfWork.ClientRepository.FindAsync(id);
     }
 
-    public Task<IEnumerable<Client>> GetClientsAsync()
+    /// <summary>
+    /// Finds all clients
+    /// </summary>
+    /// <returns>A <see cref="List"/> of <see cref="Client"/></returns>
+    public async Task<IEnumerable<Client>> GetClientsAsync()
     {
-        throw new NotImplementedException();
+        return await _unitOfWork.ClientRepository.GetAllAsync();
     }
 }
