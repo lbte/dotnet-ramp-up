@@ -1,6 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions;
 using PRFTLatam.OrdersData.Infrastructure;
 using PRFTLatam.OrdersData.Services.IServices;
 using PRFTLatam.OrdersData.Services.Services;
@@ -14,10 +14,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// https://stackoverflow.com/questions/56310174/asp-net-core-mvc-connecting-to-existing-database-using-sql-server-authenticatio#:~:text=In%20appsettings.json%20add%20the%20following%20%28with%20your%20appropriate,you%20configure%20the%20IServiceCollection%20services%20add%20the%20following
-// builder.Services.AddDbContext<OrdersDataContext>(
-//     options => {options.UseSqlServer(GetConnectionString("SQLServerConnectionStr"));}
-// );
+// https://stackoverflow.com/questions/68980778/config-connection-string-in-net-core-6
+builder.Services.AddDbContext<OrdersDataContext>(
+    options => {options.UseSqlServer(builder.Configuration.GetConnectionString("SQLServerConnectionStr"));}
+);
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IClientService, ClientService>();
