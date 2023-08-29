@@ -1,9 +1,10 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions;
-using PRFTLatam.OrdersData.Infrastructure;
+using PRFTLatam.OrdersData.WebAPI;
 using PRFTLatam.OrdersData.Services.IServices;
 using PRFTLatam.OrdersData.Services.Services;
+using PRFTLatam.OrdersData.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

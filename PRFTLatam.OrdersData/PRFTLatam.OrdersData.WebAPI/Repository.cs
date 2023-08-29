@@ -1,12 +1,12 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using PRFTLatam.OrdersData.Infrastructure.Models;
+using PRFTLatam.OrdersData.Services;
 
-namespace PRFTLatam.OrdersData.Infrastructure;
+namespace PRFTLatam.OrdersData.WebAPI;
 
-public class Repository<TId, TEntity> : IRepository<TId, TEntity>
-where TId : struct
-where TEntity : BaseEntity<TId>
+public class Repository<TEntity> : IRepository<TEntity>
+where TEntity : class
 {
     internal OrdersDataContext _context;
     internal DbSet<TEntity> _dbSet;
@@ -30,13 +30,13 @@ where TEntity : BaseEntity<TId>
         _dbSet.Remove(entity);
     }
 
-    public async Task Delete(TId id)
+    public async Task Delete(object id)
     {
         TEntity entityToDelete = await _dbSet.FindAsync(id);
         Delete(entityToDelete);
     }
 
-    public async Task<TEntity> FindAsync(TId id)
+    public async Task<TEntity> FindAsync(object id)
     {
         return await _dbSet.FindAsync(id);
     }

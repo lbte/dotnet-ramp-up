@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using PRFTLatam.OrdersData.Infrastructure.Models;
+using PRFTLatam.OrdersData.Services;
 
-namespace PRFTLatam.OrdersData.Infrastructure;
+namespace PRFTLatam.OrdersData.WebAPI;
 
 public class UnitOfWork : IUnitOfWork, IDisposable
 {
     private readonly OrdersDataContext _context;
     private bool _disposed = false;
-    private IRepository<int, Client> _clientRepository;
-    private IRepository<int, Product> _productRepository;
-    private IRepository<long, Order> _orderRepository;
+    private IRepository<Client> _clientRepository;
+    private IRepository<Product> _productRepository;
+    private IRepository<Order> _orderRepository;
 
     public UnitOfWork(OrdersDataContext context)
     {
@@ -19,24 +20,24 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     // Each repository property checks whether the repository already exists. 
     // If not, it instantiates the repository, passing in the context instance. 
     // As a result, all repositories share the same context instance.
-    public IRepository<int, Client> ClientRepository
+    public IRepository<Client> ClientRepository
     { 
         get {
-            _clientRepository ??= new Repository<int, Client>(_context);
+            _clientRepository ??= new Repository<Client>(_context);
             return _clientRepository;
         }
     }
-    public IRepository<int, Product> ProductRepository
+    public IRepository<Product> ProductRepository
     { 
         get {
-            _productRepository ??= new Repository<int, Product>(_context);
+            _productRepository ??= new Repository<Product>(_context);
             return _productRepository;
         }
     }
-    public IRepository<long, Order> OrderRepository
+    public IRepository<Order> OrderRepository
     { 
         get {
-            _orderRepository ??= new Repository<long, Order>(_context);
+            _orderRepository ??= new Repository<Order>(_context);
             return _orderRepository;
         }
     }

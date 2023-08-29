@@ -2,8 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PRFTLatam.OrdersData.Infrastructure.Models;
 
-public class Client : BaseEntity<int>
+public class Client
 {
+    [Key]
+    [MaxLength(32)]
+    public string Id { get; set; } = "";
+
     /// <summary>
     /// Name of the client. Max 50 characters
     /// </summary>

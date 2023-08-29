@@ -2,7 +2,7 @@ using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using PRFTLatam.OrdersData.Infrastructure.Models;
 
-namespace PRFTLatam.OrdersData.Infrastructure;
+namespace PRFTLatam.OrdersData.WebAPI;
 
 public class OrdersDataContext : DbContext
 {

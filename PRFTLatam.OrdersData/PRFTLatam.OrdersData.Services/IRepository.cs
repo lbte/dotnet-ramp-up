@@ -1,11 +1,10 @@
 using System.Linq.Expressions;
 using PRFTLatam.OrdersData.Infrastructure.Models;
 
-namespace PRFTLatam.OrdersData.Infrastructure;
+namespace PRFTLatam.OrdersData.Services;
 
-public interface IRepository<TId, TEntity>
-where TId : struct
-where TEntity : BaseEntity<TId>
+public interface IRepository<TEntity>
+where TEntity : class
 {
     /// <summary>
     /// Add an entity to the database acording to the TEntity type
@@ -19,7 +18,7 @@ where TEntity : BaseEntity<TId>
     /// </summary>
     /// <param name="id"></param>
     /// <returns>The TEntity found by the id input parameter</returns>
-    Task<TEntity> FindAsync(TId id);
+    Task<TEntity> FindAsync(object id);
     
     /// <summary>
     /// Get all items in a table of the database for the specific TEntity type
@@ -52,5 +51,5 @@ where TEntity : BaseEntity<TId>
     /// </summary>
     /// <param name="id">id related to the TEntity that'll be deleted</param>
     /// <returns></returns>
-    Task Delete(TId id);
+    Task Delete(object id);
 }

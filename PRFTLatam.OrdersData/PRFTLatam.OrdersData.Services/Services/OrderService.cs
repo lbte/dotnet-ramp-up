@@ -1,4 +1,3 @@
-using PRFTLatam.OrdersData.Infrastructure;
 using PRFTLatam.OrdersData.Infrastructure.Models;
 using PRFTLatam.OrdersData.Services.IServices;
 
@@ -41,4 +40,15 @@ public class OrderService : IOrderService
     {
         return await _unitOfWork.OrderRepository.GetAllAsync(x => x.Client.Id.Equals(id), x => x.OrderBy(x => x.Id), new Client().GetType().Name);
     }
+
+
+    /*
+    SELECT *
+    FROM order
+    LEFT JOIN client ON order.client_id = client.id
+    WHERE order.client_id IS NULL;
+    */
+
+    // https://stackoverflow.com/questions/525194/linq-inner-join-vs-left-join
+    // https://stackoverflow.com/questions/48646568/sql-server-join-where-not-exist-on-other-table#:~:text=You%20can%20you%20use%20an%20intelligent%20left%20join,non%20matching%20rows%20then%20use%20LEFT%20JOIN%20instead
 }

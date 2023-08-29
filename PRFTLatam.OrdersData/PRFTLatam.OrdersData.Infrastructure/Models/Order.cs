@@ -1,14 +1,18 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PRFTLatam.OrdersData.Infrastructure.Models;
 
-public class Order : BaseEntity<long>
+public class Order
 {
+    [Key]
+    public long Id { get; set; }
+
     /// <summary>
     /// The <see cref="Client"/> id this order belongs to
     /// </summary>
     [ForeignKey("Client")]
-    public int ClientId { get; set; }
+    public string ClientId { get; set; } = "";
 
     /// <summary>
     /// The <see cref="Client"/> entity this order is referring to
