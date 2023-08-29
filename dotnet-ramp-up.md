@@ -961,6 +961,21 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
     dotnet add package Microsoft.EntityFrameworkCore.Design
     ```
 
+    * Create migrations to add the database and update it:
+
+    ``` shell
+    dotnet ef migrations add InitialMigration
+    dotnet ef database update
+    ```
+
+    Then in SQL Server Express it shows it like:
+    ![Database](media/database.png)
+
+    And also add the following to appsettings.json in the connection string:
+
+    `TrustServerCertificate=True`
+
+
 3. Implement Controllers and Services that allow publishing the following Rest services:
 
     Controller -> Service -> Repo (Why doesn't the Controller call the repo directly?)
