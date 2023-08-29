@@ -28,7 +28,7 @@ public class OrderService : IOrderService
     /// <returns>A <see cref="List"/> of <see cref="Order"/></returns>
     public async Task<IEnumerable<Order>> GetOrdersAsync()
     {
-        return await _unitOfWork.OrderRepository.GetAllAsync();
+        return await _unitOfWork.OrderRepository.GetAllAsync(null, null, new Product().GetType().Name);
     }
 
     /// <summary>
