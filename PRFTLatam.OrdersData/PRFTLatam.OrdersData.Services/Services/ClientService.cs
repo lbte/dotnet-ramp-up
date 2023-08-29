@@ -6,10 +6,12 @@ namespace PRFTLatam.OrdersData.Services.Services;
 public class ClientService : IClientService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IClientRepository _clientRepository;
 
-    public ClientService(IUnitOfWork unitOfWork)
+    public ClientService(IUnitOfWork unitOfWork, IClientRepository clientRepository)
     {
         _unitOfWork = unitOfWork;
+        _clientRepository = clientRepository;
     }
 
     /// <summary>
@@ -40,6 +42,16 @@ public class ClientService : IClientService
     /// <returns>A <see cref="List"/> of <see cref="Client"/></returns>
     public async Task<IEnumerable<Client>> GetClientsAsync()
     {
-        return await _unitOfWork.ClientRepository.GetAllAsync();
+        return await _unitOfWork.ClientRepository.GetAllAsync(null, null, "Orders");
+        // return await _clientRepository.GetClientsWithoutOrders(x => !x.Orders.Any());
+    }
+    
+    /// <summary>
+    /// Finds all clients
+    /// </summary>
+    /// <returns>A <see cref="List"/> of <see cref="Client"/></returns>
+    public async Task<IEnumerable<Client>> GetClientsWithoutOrders()
+    {
+        return await _unitOfWork.ClientRepository.GetAllAsync(x => !x.Orders.Any(), null, "Orders");
     }
 }

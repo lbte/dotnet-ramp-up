@@ -22,7 +22,7 @@ public interface IOrderService
     /// </summary>
     /// <param name="id">The unique id of the client</param>
     /// <returns>A <see cref="List"/> of <see cref="Order"/></returns>
-    Task <IEnumerable<Order>> GetOrdersByClient(int id);
+    Task <IEnumerable<Order>> GetOrdersByClient(string id);
     
     // /// <summary>
     // /// Creates a new <see cref="Order"/> entity in the DB

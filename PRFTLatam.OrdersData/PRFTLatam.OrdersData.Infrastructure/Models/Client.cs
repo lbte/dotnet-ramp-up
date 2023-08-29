@@ -17,4 +17,6 @@ public class Client
     /// Client's quota in dollars. Max value 1.000.000. Also valid: 0.32 or 120.55
     /// </summary>
     public decimal Quota {get; set; } = 10000;
+
+    public virtual ICollection<Order> Orders { get; set; }
 }

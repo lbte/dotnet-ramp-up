@@ -36,9 +36,10 @@ public class OrderService : IOrderService
     /// </summary>
     /// <param name="id">The unique id of the client</param>
     /// <returns>A <see cref="List"/> of <see cref="Order"/></returns>
-    public async Task<IEnumerable<Order>> GetOrdersByClient(int id)
+    public async Task<IEnumerable<Order>> GetOrdersByClient(string id)
     {
-        return await _unitOfWork.OrderRepository.GetAllAsync(x => x.Client.Id.Equals(id), x => x.OrderBy(x => x.Id), new Client().GetType().Name);
+        // TODO
+        return await _unitOfWork.OrderRepository.GetAllAsync(x => x.ClientId.Equals(id), null);
     }
 
 

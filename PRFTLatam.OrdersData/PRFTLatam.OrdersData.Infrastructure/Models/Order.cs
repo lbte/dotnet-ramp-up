@@ -15,11 +15,6 @@ public class Order
     public string ClientId { get; set; } = "";
 
     /// <summary>
-    /// The <see cref="Client"/> entity this order is referring to
-    /// </summary>
-    public virtual Client? Client { get; set; }
-
-    /// <summary>
     /// The <see cref="Product"/> id this order belongs to
     /// </summary>
     [ForeignKey("Product")]

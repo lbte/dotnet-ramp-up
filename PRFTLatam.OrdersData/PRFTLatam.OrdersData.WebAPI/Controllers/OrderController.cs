@@ -26,7 +26,7 @@ public class OrderController : ControllerBase
 
     [HttpGet]
     [Route("GetOrdersByClient")]
-    public async Task<IActionResult> GetOrdersByClient(int id)
+    public async Task<IActionResult> GetOrdersByClient(string id)
     {
         var orders = await _orderService.GetOrdersByClient(id);
         return orders.Any() ? Ok(orders) : StatusCode(StatusCodes.Status404NotFound, $"There were no orders found to show for the client with id {id}");

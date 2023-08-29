@@ -9,7 +9,7 @@ public class Repository<TEntity> : IRepository<TEntity>
 where TEntity : class
 {
     internal OrdersDataContext _context;
-    internal DbSet<TEntity> _dbSet;
+    protected DbSet<TEntity> _dbSet;
     public Repository(OrdersDataContext context)
     {
         _context = context;

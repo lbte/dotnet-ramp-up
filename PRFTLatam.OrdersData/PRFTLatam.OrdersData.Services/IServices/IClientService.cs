@@ -23,4 +23,7 @@ public interface IClientService
     /// <param name="client">A new client entity</param>
     /// <returns>The created client with an assigned Id</returns>
     Task <Client> CreateClient(Client client);
+
+
+    Task<IEnumerable<Client>> GetClientsWithoutOrders();
 }
