@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.OrdersData.WebAPI
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.OrdersData.Services", "PRFTLatam.OrdersData.Services\PRFTLatam.OrdersData.Services.csproj", "{80013580-693B-42B1-A304-6A5D258D54AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRFTLatam.OrdersData.Tests", "PRFTLatam.OrdersData.Tests\PRFTLatam.OrdersData.Tests.csproj", "{E981F8B0-6475-42C9-800C-3DCA77BE115E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,13 @@ Global
 		{80013580-693B-42B1-A304-6A5D258D54AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80013580-693B-42B1-A304-6A5D258D54AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80013580-693B-42B1-A304-6A5D258D54AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{109A6CD2-F28B-4534-9B09-21F55CB351C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{109A6CD2-F28B-4534-9B09-21F55CB351C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{109A6CD2-F28B-4534-9B09-21F55CB351C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{109A6CD2-F28B-4534-9B09-21F55CB351C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E981F8B0-6475-42C9-800C-3DCA77BE115E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E981F8B0-6475-42C9-800C-3DCA77BE115E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E981F8B0-6475-42C9-800C-3DCA77BE115E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E981F8B0-6475-42C9-800C-3DCA77BE115E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

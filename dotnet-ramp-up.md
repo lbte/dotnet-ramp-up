@@ -218,7 +218,7 @@ Striking 100 percent code coverage means the code is 100 percent bugless. No err
 
     Before you can write unit tests against your code, the unit test project needs a reference to the math class library project. Adding project and NuGet references is a matter of adding the necessary entry to the csproj xml file.
 
-    <img src="https://codemag.com/Article/Image/2009101/image16.png" width=700px>
+    ![reference-math-class](media/reference-math-class.png)
 
 ### [Unit testing C# in .NET Core using dotnet test and xUnit](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
 
@@ -961,7 +961,7 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
     dotnet add package Microsoft.EntityFrameworkCore.Design
     ```
 
-    * Create migrations to add the database and update it:
+    * Create migrations to add the database and update it [Entity Framework Core tools reference - .NET Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet), [Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli):
 
     ``` shell
     dotnet ef migrations add InitialMigration
@@ -997,6 +997,25 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
 4. Implement a unit test in the repository for one of the methods that allows you to do the GET.
 
     Implement unit test for the POST method.
+
+    * [Unit tests in Entity Framework Core 5](https://www.michalbialecki.com/2020/11/28/unit-tests-in-entity-framework-core-5/)
+
+    * Create the project for the tests
+    ``` shell
+    cd PRFTLatam.OrdersData
+    dotnet new xunit -o PRFTLatam.OrdersData.Tests
+    dotnet sln add PRFTLatam.OrdersData.Tests/
+    dotnet add PRFTLatam.OrdersData.Tests/ reference PRFTLatam.OrdersData.Services/
+    <!-- dotnet add PRFTLatam.OrdersData.Tests/ reference PRFTLatam.OrdersData.WebAPI/
+    dotnet add PRFTLatam.OrdersData.Tests/ reference PRFTLatam.OrdersData.Infrastructure/ -->
+
+    cd .\PRFTLatam.OrdersData.Tests\
+
+    ```
+
+    [Choosing a testing strategy](https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy)
+
+    [Testing without your production database system](https://learn.microsoft.com/en-us/ef/core/testing/testing-without-the-database)
 
 ## [The Repository and Unit of Work Patterns](https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions/getting-started-with-ef-5-using-mvc-4/implementing-the-repository-and-unit-of-work-patterns-in-an-asp-net-mvc-application)
 
