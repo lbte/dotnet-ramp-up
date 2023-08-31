@@ -1010,6 +1010,8 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
     dotnet add PRFTLatam.OrdersData.Tests/ reference PRFTLatam.OrdersData.Infrastructure/ -->
 
     cd .\PRFTLatam.OrdersData.Tests\
+    dotnet add package NSubstitute
+    dotnet add package NSubstitute.Analyzers.CSharp
 
     ```
 

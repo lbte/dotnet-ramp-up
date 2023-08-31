@@ -38,8 +38,7 @@ public class OrderService : IOrderService
     /// <returns>A <see cref="List"/> of <see cref="Order"/></returns>
     public async Task<IEnumerable<Order>> GetOrdersByClient(string id)
     {
-        // TODO
-        return await _unitOfWork.OrderRepository.GetAllAsync(x => x.ClientId.Equals(id), null);
+        return await _unitOfWork.OrderRepository.GetAllAsync(x => x.ClientId.Equals(id), null, "Product");
     }
 
 

@@ -15,7 +15,7 @@ public interface IClientService
     /// </summary>
     /// <param name="id">The unique id of the client</param>
     /// <returns>A <see cref="Client"/></returns>
-    Task <Client> GetClientById(int id);
+    Task <Client> GetClientById(string id);
     
     /// <summary>
     /// Creates a new <see cref="Client"/> entity in the DB
