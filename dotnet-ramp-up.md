@@ -1166,35 +1166,433 @@ Para ejecutar:
 
 * Función que regresa una evaluación que sea true o false cuando un número es par
 
-        using System.Linq;
-        using System.Collections.Generic;
+    ``` csharp
+    using System.Linq;
+    using System.Collections.Generic;
 
-        var numbers = new Lis<int> {3, 5, 7, 4, 8, 9, 2};
-        Func<int, bool> GetEven = (number) => number % 2 == 0; // <- aquí la funcionalidad va a estar encapsulada y se puede reutilizar
+    var numbers = new Lis<int> {3, 5, 7, 4, 8, 9, 2};
+    Func<int, bool> GetEven = (number) => number % 2 == 0; // <- aquí la funcionalidad va a estar encapsulada y se puedreutilizar
 
-        var evens = numbers.Where(GetEven);
+    var evens = numbers.Where(GetEven);
+    ```
 
     Esto permite usar opciones de filtrado de Linq, con el `Where` lo que hace es lo que devuelva true es lo que va a retornar
 
 * Action -> No devuelve nada
 
-        Action<int> print = (number) => Console.WriteLine(number);
-        print(5);
+    ``` csharp
+    Action<int> print = (number) => Console.WriteLine(number);
+    print(5);
+    ```
 
 * Funciones que reciben funciones, recibe un int y una función, devueve un enterp:
 
-        Func<int, Func<int, int>, int> FnHigherOrder = (number, fn) => 
+    ``` csharp
+    Func<int, Func<int, int>, int> FnHigherOrder = (number, fn) => 
+    {
+        if (number > 100)
+            return fn(number);
+        else 
+            return number;
+    };
+
+    var result = FnHigherOrder(600, n => n * 2); // mandando la función lambda tal cual
+    ```
+
+# Code challenges
+
+## 9. Authentication JWT
+
+In this folder, you will find a solution with a configured application with the code base of a web API service that manages the user lifecycle operations.
+
+<img src="media\authetication-service.png" width=700px>
+
+The web app emulates a user service that contains seed users. A user is defined in the following way
+
+``` csharp
+public class User
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public UserRole Role { get; set; }
+    public bool IsActiveRole { get; set; } = true;
+}
+```
+
+1. **Requirement**
+
+​​
+The requirement is to make the endpoints protected by using an authentication schema by using JWT Tokens. In order to make the web API secure you will need to create a new endpoint to log in, the response of this endpoint is a JWT token that will contain the user claims information.
+
+The token should contain in the claims the following information.
+
+* Name
+* Email
+* User role
+* IsActiveRole flag
+
+Once the token is generated it would be required to protect the user endpoints, which means that in order to reach those endpoints you will need to provide it as part of the request the token.
+
+2. **Requirement**
+​​​​
+
+Once you have the endpoints protected it will be needed to make them protected based on the user role. As part of a requirement here is that the endpoints might be accessed based on the role of the user that is trying to hit it. Once you have the endpoints protected it will be needed to make them protected based on the user role. As part of a requirement here is that the endpoints might be accessed based on the role of the user that is trying to hit it.
+
+The defined roles are described in the following enumeration.
+
+``` csharp
+public enum UserRole
+{
+    Reader,
+    Contributor,
+    Manager
+}
+```
+​​​​​​​​​The rules are defined in the following way.
+
+* Reader: Can list users and get users by id.
+* Contributor: Same reader permissions also can create and update users.
+* Manager: Same contributor permissions plus can delete users.
+
+## Related material
+
+<ul>
+    <li><a data-cke-saved-href="https://code-maze.com/authentication-aspnetcore-jwt-1/" href="https://code-maze.com/authentication-aspnetcore-jwt-1/">JWT Authentication in ASP.NET Core Web API</a></li>
+    <li><a data-cke-saved-href="https://weblog.west-wind.com/posts/2021/Mar/09/Role-based-JWT-Tokens-in-ASPNET-Core" href="https://weblog.west-wind.com/posts/2021/Mar/09/Role-based-JWT-Tokens-in-ASPNET-Core">Role based JWT Tokens in ASP.NET Core APIs</a></li>
+    <li><a data-cke-saved-href="https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/" href="https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/">JWT in ASP.NET Core</a></li>
+</ul>
+
+## [JWT Authentication in ASP.NET Core Web API](https://code-maze.com/authentication-aspnetcore-jwt-1/)
+
+There is an application that has a login form. A user enters their username, and password and presses the login button. After pressing the login button, a client (eg web browser) sends the user’s data to the server’s API endpoint:
+
+<img src="https://code-maze.com/wp-content/uploads/2018/04/picture_1-e1650647612114.png" width=700px>
+
+When the server validates the user’s credentials and confirms that the user is valid, it’s going to send an encoded JWT to the client. JSON web token is basically a JavaScript object that can contain some attributes of the logged-in user. It can contain a username, user subject, user roles, or some other useful information.
+
+On the client-side, we store the JWT in the browser’s storage to remember the user’s login session. We may also use the information from the JWT to enhance the security of our application as well.
+
+### What is JWT (JSON Web Token)
+JSON web tokens enable a secure way to transmit data between two parties in the form of a JSON object. It’s an open standard and it’s a popular mechanism for web authentication. In our case, we are going to use JSON web tokens to securely transfer a user’s data between the client and the server.
+
+JSON web tokens consist of three basic parts: the header, payload, and signature.
+
+One real example of a JSON web token:
+
+<img src="https://code-maze.com/wp-content/uploads/2018/04/2.png" width=500px>
+
+* Header: JSON object encoded in the base64 format. It contains information like the type of token and the name of the algorithm
+    ``` json
+    { 
+        "alg": "HS256", 
+        "typ": "JWT" 
+    }
+    ```
+
+* Payload: is also a JavaScript object encoded in the base64 format. The payload contains some attributes about the logged-in user. For example, it can contain the user id, user subject, and information about whether a user is an admin user or not. JSON web tokens are not encrypted and can be decoded with any base64 decoder so we should never include sensitive information in the Payload
+
+    ``` json
+    { 
+        "sub": "1234567890", 
+        "name": "John Doe", 
+        "iat": 1516239022 
+    }
+    ```
+
+* Signature: Usually, the server uses the signature part to verify whether the token contains valid information – the information the server is issuing. It is a digital signature that gets generated by combining the header and the payload together. Moreover, it’s based on a secret key that only the server knows
+
+
+    <img src="https://code-maze.com/wp-content/uploads/2018/04/3.png" width=300px>
+
+    So, if malicious users try to modify the values in the payload, they have to recreate the signature and for that purpose, they need the secret key that only the server knows about. On the server side, we can easily verify if the values are original or not by comparing the original signature with a new signature computed from the values coming from the client.
+
+### Creating ASP.NET Core Web API Project > Configuring JWT Authentication
+
+1. Create a brand new ASP.NET Core Web API project.
+
+2. We can open the launchSettings.json file and modify the applicationUrl property:
+
+        "applicationUrl": "https://localhost:5001;http://localhost:5000"
+
+    As a result, we will see our application hosted at https://localhost:5001
+
+3. To configure JWT authentication in .NET Core, we need to modify Program.csfile.
+
+    > For the sake of simplicity, we are going to add all the code inside the Program class. But the better practice is to use [Extension methods](https://code-maze.com/csharp-static-members-constants-extension-methods/) so we could free our class from extra code lines. If you want to learn how to do that, and to learn more about configuring the .NET Core Web API project, check out: [.NET Core Service Configuration](https://code-maze.com/net-core-web-development-part2/).
+
+    1. First, let’s install the Microsoft.AspNetCore.Authentication.JwtBearer NuGet package that we require to work with JWT in the ASP.NET Core app:
+
+        dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+
+    2. Next, let’s add the code to configure JWT right above the builder.Services.AddControllers() line:
+
+        ```csharp
+        builder.Services.AddAuthentication(opt => {
+        opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = "https://localhost:5001",
+                    ValidAudience = "https://localhost:5001",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345"))
+                };
+            });
+        ```
+
+        In order for this to work, we have to add a few using directives:
+
+        ```csharp
+        using Microsoft.AspNetCore.Authentication.JwtBearer;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Text;
+        ```
+
+        **Explanation:**
+
+        Firstly, we register the JWT authentication middleware by calling the AddAuthentication method. Next, we specify the default authentication scheme JwtBearerDefaults.AuthenticationScheme as well as DefaultChallengeScheme.
+
+        By calling the AddJwtBearer method, we enable the JWT authenticating using the default scheme, and we pass a parameter, which we use to set up JWT bearer options:
+
+        * The issuer is the actual server that created the token (ValidateIssuer=true)
+        * The receiver of the token is a valid recipient (ValidateAudience=true)
+        * The token has not expired (ValidateLifetime=true)
+        * The signing key is valid and is trusted by the server (ValidateIssuerSigningKey=true)
+        * Additionally, we are providing values for the issuer, audience, and the secret key that the server uses to generate the signature for JWT.
+
+        We are going to hardcode both username and password for the sake of simplicity. But, the best practice is to put the credentials in a database or a configuration file or to store the secret key in the environment variable.
+
+    3. There is one more step we need to do to make our authentication middleware available to the application:
+
+        ```csharp
+        app.UseHttpsRedirection();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
+        ```
+
+### Securing API Endpoints
+
+We already have an API endpoint /weatherforecast to get some example weather information and that endpoint is not secure. Anyone can send a request to https://localhost:5001/weatherforecast to fetch the values. So, in this section, we are going to add a new api/customers endpoint to serve a list of the customers. This endpoint is going to be secure from anonymous users and only logged-in users will be able to consume it.
+
+1. Now, let’s add an empty CustomersController in the Controllers folders. Inside the controller, we are going to add a Get action method that is going to return an array of customers. More importantly, we are going to add an extra security layer by decorating the action method with the `[Authorize]` attribute so only logged-in users can access the route:
+
+    ```csharp
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CustomersController : ControllerBase
+    {
+        [HttpGet, Authorize]
+        public IEnumerable<string> Get()
         {
-            if (number > 100)
-                return fn(number);
-            else 
-                return number;
-        };
+            return new string[] { "John Doe", "Jane Doe" };
+        }
+    }
+    ```
 
-        var result = FnHigherOrder(600, n => n * 2); // mandando la función lambda tal cual
+    To be able to use the Authorize attribute we have to add a new using directive inside the file:
 
+    ```csharp
+    using Microsoft.AspNetCore.Authorization;
+    ```
+
+    `Authorize` attribute on top of the GET method restricts access to only authorized users. Only users who are logged in can fetch the list of customers. Therefore, this time if we make a request to https://localhost:5001/api/customers from the browser’s address bar, instead of getting a list of customers, we are going to get a 401 Not Authorized response:
+
+
+### Adding Login Endpoint
+
+To authenticate anonymous users, we have to provide a login endpoint so the users can log in and access protected resources. A user is going to provide a username and password, and if the credentials are valid we are going to issue a JSON web token for the requesting client.
+
+In addition, before we start implementing the authentication controller, we need to add a LoginModel to hold user’s credentials on the server. LoginModel is a simple class that contains two properties: UserName and Password.  We are going to create a Models folder in the root directory and inside it a LoginModel class:
+
+```csharp
+public class LoginModel
+{
+    public string? UserName { get; set; }
+    public string? Password { get; set; }
+}
+```
+
+Also, let’s create one more class inside the same Models folder:
+
+```csharp
+public class AuthenticatedResponse
+{
+    public string? Token { get; set; }
+}
+```
+
+Now let’s create the AuthController inside the Controllers folder.
+
+Inside the AuthControllerwe are going to add the Login action to validate the user’s credentials. If the credentials are valid, we are going to issue a JSON web token. For this demo, we are going to hardcode the username and password to implement a fake user. After validating the user’s credentials we are going to generate a JWT with a secret key. JWT uses the secret key to generate the signature.
+
+So, let’s implement the AuthController:
+
+```csharp
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
+{
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginModel user)
+    {
+        if (user is null)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        if (user.UserName == "johndoe" && user.Password == "def@123")
+        {
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345"));
+            var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            var tokeOptions = new JwtSecurityToken(
+                issuer: "https://localhost:5001",
+                audience: "https://localhost:5001",
+                claims: new List<Claim>(),
+                expires: DateTime.Now.AddMinutes(5),
+                signingCredentials: signinCredentials
+            );
+
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
+
+            return Ok(new AuthenticatedResponse { Token = tokenString });
+        }
+
+        return Unauthorized(); // 401
+    }
+}
+```
+
+1. We decorate our Login action with the HttpPost attribute. Inside the login method, we create the SymmetricSecretKey with the secret key value superSecretKey@345. Then, we create the SigningCredentials object and as arguments, we provide a secret key and the name of the hashing algorithm that we are going to use to encode the token.
+
+2. We create the JwtSecurityToken object with some important parameters:
+
+    * Issuer: The first parameter is a simple string representing the name of the webserver that issues the token
+    * Audience: The second parameter is a string value representing valid recipients
+    * Claims: The third argument is a list of user roles, for example, the user can be an admin, manager, or author (we are going to add roles in the next post)
+    * Expires: The fourth argument is the DateTime object that represents the date and time after which the token expires
+
+3. Then, we create a string representation of JWT by calling the WriteToken method on JwtSecurityTokenHandler. Finally, we return JWT in a response. As a response, we create the AuthenticatedResponse object that contains only the Token property.
+
+### Testing the JWT Authentication
+
+1. let’s send a POST request to https://localhost:5001/api/auth/login and provide a request body:
+
+    ```json
+    { 
+        "UserName":"johndoe", 
+        "Password": "def@123" 
+    }
+    ```
+
+    In the response section, we are going to see a 200 OK response with the JWT string in the response body:
+
+    <img src="https://code-maze.com/wp-content/uploads/2019/11/02-Postam-Jwt-Response.png" width=700px/>
+
+### Role-Based Authorization (https://code-maze.com/authentication-aspnetcore-jwt-2/)
+Because we have only the `[Authorize]` attribute on top of the Customers controller’s GET action, all the authenticated users have access to that endpoint.
+
+First, let’s modify the `[Authorize]` attribute to give access only to a user with the Manager role:
+
+```csharp
+[HttpGet, Authorize(Roles = "Manager")]
+public IEnumerable<string> Get()
+{
+    return new string[] { "John Doe", "Jane Doe" };
+}
+```
+
+Additionally, let’s modify the Login action in the AuthController to set up the user claims:
+
+```csharp
+if (user.UserName == "johndoe" && user.Password == "def@123")
+{
+    var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345"));
+    var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+
+    var claims = new List<Claim> //
+    { //
+        new Claim(ClaimTypes.Name, user.UserName), //
+        new Claim(ClaimTypes.Role, "Manager") //
+    };//
+
+    var tokeOptions = new JwtSecurityToken(
+        issuer: "https://localhost:5001",
+        audience: "https://localhost:5001",
+        claims: claims, //
+        expires: DateTime.Now.AddMinutes(5),
+        signingCredentials: signinCredentials
+    );
+
+    var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
+
+    return Ok(new AuthenticatedResponse { Token = tokenString });
+}
+```
+
+In the changed parts of the code, we create claims by adding the username and the role claim to the Claim list. Now, our “johndoe” user is a Manager and it should have access to the Customer’s GET action. These claims are going to be included in our token. 
+
+> All the JWT-related logic is inside our Login method for the sake of simplicity. But we encourage you to create a new class (JwtConfigurator or use any other name) and transfer all the SymmetricSecurityKey, SigninCredentials, Claims, and JWtSecurityToken logic to a new class.
+
+### JwtHelper DecodeToken
+
+The jwtHelper service has the decodeToken function which can decode our token into the JSON object. Because we have already injected the JwtHelper service into the AuthGuard service, let’s modify that service a bit just to see how the decodeToken function works. We are going to add one line of code that checks if the token exists and if it hasn’t expired:
+
+```csharp
+if (token && !this.jwtHelper.isTokenExpired(token)){
+  console.log(this.jwtHelper.decodeToken(token))
+  return true;
+}
+```
+
+Once we log in again, we can see the result in the console window:
+
+```json
+aud: "https://localhost:5001"
+exp: 1650718465
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: "Manager"
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: "johndoe"
+iss: "https://localhost:5001"
+```
+
+## [JWT Authentication In ASP.NET Core](https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/)
+
+## Implementation
+
+1. In order to create the project:
+
+    ``` shell
+    mkdir PRFTLatam.Training.JwtAuthentication
+    cd .\PRFTLatam.Training.JwtAuthentication\
+    dotnet new webapi -o PRFTLatam.Training.JwtAuthentication.  Service
+    dotnet new sln -o PRFTLatam.Training.JwtAuthentication
+    dotnet sln add ./PRFTLatam.Training.JwtAuthentication.  Service/
+    ```
+
+2. Then create an Enums folder to add the different roles and a UserRole.cs file to add the roles
+
+3. Create a Models folder to add the user model, the Dtos folder for the userDto, the services folder for the interfaces and implementations and add to the controllers folder the users controller
+
+4. Add the dependency injection to the Program.cs for the services
 
 # QUESTIONS
+
+```csharp
+
+```
 
 1. No entiendo cómo el enunciado del ejercicio que piden hacer en la semana 3 de la web api
 
@@ -1216,10 +1614,9 @@ leer sobre algo que no sepa o me interese. qué pasa cuando hago un try catch
 
 Aprender que algo se aprenda bien, bases conceptuales claras
 
-# QUESTIONS
 
-1. La conexión a BD, en el program.cs y con el sql server como tal (buscar primero igual)
+4. La conexión a BD, en el program.cs y con el sql server como tal (buscar primero igual)
 
-2. Añadí referencias de API con Infrastructure y Services, para poder hacer la inyección de dependecias con el UnitOfWork. Además los modelos los hice en Infrastructura en lugar de Services
+5. Añadí referencias de API con Infrastructure y Services, para poder hacer la inyección de dependecias con el UnitOfWork. Además los modelos los hice en Infrastructura en lugar de Services
 
-3. Para esto `GET api/v1/getAllCustomersWithNoOrder Returns all customers who have never had an order.`, como en client no hay una asociación directa con orders sino que la clave foránea la tiene order para con los clientes, ¿cómo puedo obtener esos clientes? ¿haciendo un join de las dos tablas y mirar qué clientes no están en la tabla de orders? 
+6. Para esto `GET api/v1/getAllCustomersWithNoOrder Returns all customers who have never had an order.`, como en client no hay una asociación directa con orders sino que la clave foránea la tiene order para con los clientes, ¿cómo puedo obtener esos clientes? ¿haciendo un join de las dos tablas y mirar qué clientes no están en la tabla de orders? 
