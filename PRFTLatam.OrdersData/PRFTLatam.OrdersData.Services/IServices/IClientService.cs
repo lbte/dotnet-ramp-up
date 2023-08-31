@@ -26,4 +26,6 @@ public interface IClientService
 
 
     Task<IEnumerable<Client>> GetClientsWithoutOrders();
+
+    Task<IEnumerable<Client>> GetClientsOrdersTotal();
 }

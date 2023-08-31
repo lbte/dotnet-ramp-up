@@ -964,6 +964,7 @@ Finalize is a bit expensive to use. It doesn't clean the memory immediately. Whe
     * Create migrations to add the database and update it [Entity Framework Core tools reference - .NET Core CLI](https://learn.microsoft.com/en-us/ef/core/cli/dotnet), [Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli):
 
     ``` shell
+    cd .\PRFTLatam.OrdersData.WebAPI\
     dotnet ef migrations add InitialMigration
     dotnet ef database update
     ```

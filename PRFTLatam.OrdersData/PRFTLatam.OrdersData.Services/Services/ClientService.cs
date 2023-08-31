@@ -45,7 +45,29 @@ public class ClientService : IClientService
         return await _unitOfWork.ClientRepository.GetAllAsync(null, null, "Orders,Orders.Product");
         // return await _clientRepository.GetClientsWithoutOrders(x => !x.Orders.Any());
     }
-    
+
+    public async Task<IEnumerable<Client>> GetClientsOrdersTotal()
+    {
+        // get clients ordered alphabetically
+        var clients = await _unitOfWork.ClientRepository.GetAllAsync(null, x => x.OrderBy(x => x.Name), "Orders");
+        
+        // iterate those clients and for each iterate over the Orders collection
+        foreach(var client in clients)
+        {
+            if (client.Orders.Any())
+            {
+                foreach(var order in client.Orders)
+                {
+                    // for each order add to the OrdersTotal attribute the value of Order.Price
+                    client.OrdersTotal += order.Price;
+                }
+            }
+        }
+
+        // return the customers ordered alphabetically by customer name
+        return clients;
+    }
+
     /// <summary>
     /// Finds all clients
     /// </summary>

@@ -24,10 +24,10 @@ public interface IOrderService
     /// <returns>A <see cref="List"/> of <see cref="Order"/></returns>
     Task <IEnumerable<Order>> GetOrdersByClient(string id);
     
-    // /// <summary>
-    // /// Creates a new <see cref="Order"/> entity in the DB
-    // /// </summary>
-    // /// <param name="order">A new order entity</param>
-    // /// <returns>The created order with an assigned Id</returns>
-    // Task <IEnumerable<Order>> CreateOrder(Order order);
+    /// <summary>
+    /// Creates a new <see cref="Order"/> entity in the DB
+    /// </summary>
+    /// <param name="order">A new order entity</param>
+    /// <returns>The created order with an assigned Id</returns>
+    Task <IEnumerable<Order>> CreateOrder(Order order);
 }

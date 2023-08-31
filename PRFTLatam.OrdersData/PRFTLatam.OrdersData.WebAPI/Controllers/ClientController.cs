@@ -32,6 +32,14 @@ public class ClientController : ControllerBase
         return clients.Any() ? Ok(clients) : StatusCode(StatusCodes.Status404NotFound, "There were no clients found to show");
     }
 
+    [HttpGet]
+    [Route("GetClientsOrdersTotal")]
+    public async Task<IActionResult> GetClientsOrdersTotal()
+    {
+        var clients = await _clientService.GetClientsOrdersTotal();
+        return clients.Any() ? Ok(clients) : StatusCode(StatusCodes.Status404NotFound, "There were no clients found to show");
+    }
+
     [HttpPost]
     [Route("CreateClient")]
     public async Task<IActionResult> CreateClient(Client client)

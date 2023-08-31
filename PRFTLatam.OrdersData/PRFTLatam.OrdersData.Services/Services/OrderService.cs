@@ -12,6 +12,11 @@ public class OrderService : IOrderService
         _unitOfWork = unitOfWork;
     }
 
+    public Task<IEnumerable<Order>> CreateOrder(Order order)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Finds a Order by its id in the DB
     /// </summary>
