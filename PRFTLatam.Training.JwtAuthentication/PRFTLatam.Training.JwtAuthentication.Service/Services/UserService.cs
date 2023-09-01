@@ -52,6 +52,11 @@ public class UserService : IUserService
         return await Task.FromResult(_users.FirstOrDefault(user => user.Id.Equals(id)));
     }
 
+    public async Task<User> GetUserByEmailAsync(string email)
+    {
+        return await Task.FromResult(_users.FirstOrDefault(user => user.Email.Equals(email)));
+    }
+
     public async Task<IReadOnlyCollection<User>> GetUsersAsync()
     {
         return await Task.FromResult(_users.AsReadOnly());

@@ -1257,6 +1257,8 @@ public enum UserRole
 * Contributor: Same reader permissions also can create and update users.
 * Manager: Same contributor permissions plus can delete users.
 
+
+
 ## Related material
 
 <ul>
@@ -1264,6 +1266,7 @@ public enum UserRole
     <li><a data-cke-saved-href="https://weblog.west-wind.com/posts/2021/Mar/09/Role-based-JWT-Tokens-in-ASPNET-Core" href="https://weblog.west-wind.com/posts/2021/Mar/09/Role-based-JWT-Tokens-in-ASPNET-Core">Role based JWT Tokens in ASP.NET Core APIs</a></li>
     <li><a data-cke-saved-href="https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/" href="https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/">JWT in ASP.NET Core</a></li>
 </ul>
+
 
 ## [JWT Authentication in ASP.NET Core Web API](https://code-maze.com/authentication-aspnetcore-jwt-1/)
 
@@ -1325,7 +1328,7 @@ One real example of a JSON web token:
 
     1. First, let’s install the Microsoft.AspNetCore.Authentication.JwtBearer NuGet package that we require to work with JWT in the ASP.NET Core app:
 
-        dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+        `dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer`
 
     2. Next, let’s add the code to configure JWT right above the builder.Services.AddControllers() line:
 
@@ -1587,6 +1590,145 @@ iss: "https://localhost:5001"
 3. Create a Models folder to add the user model, the Dtos folder for the userDto, the services folder for the interfaces and implementations and add to the controllers folder the users controller
 
 4. Add the dependency injection to the Program.cs for the services
+
+5. Install package (version 6 is compatible with .net version 6):
+
+    `dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer -v 6.0`
+
+6. Register JWT Middleware at Program.cs
+
+    ```csharp
+    // register the JWT authentication middleware
+    builder.Services.AddAuthentication(opt => {
+        opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }).AddJwtBearer(options => // enable the JWT authenticating
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true, // server that created the token
+            ValidateAudience = true, // receiver of the token is a valid recipient
+            ValidateLifetime = true, // token has not expired
+            ValidateIssuerSigningKey = true, // signing key is valid and is trusted by the server
+            ValidIssuer = "https://localhost:5001",
+            ValidAudience = "https://localhost:5001",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345"))
+        };
+    });
+    ```
+
+7. Create Login and AuthenticatedResponse models:
+
+    **Login model**
+    ```csharp
+    namespace PRFTLatam.Training.JwtAuthentication.Service.Models;
+
+    public class Login
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+    ```
+
+    **Authenticated Response model**
+    ```csharp
+    using System.Security.Claims;
+
+    namespace PRFTLatam.Training.JwtAuthentication.Service.Models;
+
+    public class AuthenticatedResponse
+    {
+        public string Token { get; set; }
+        public Dictionary<string, string> UserClaims { get; set; }
+    }
+    ```
+
+8. Create the authentication controller for the login
+
+9. Update endpoints with the `Authorize(Roles = "Reader,Contributor,Manager")` attribute to protect them, so that only logged in users can use them and also only the users with specific roles
+
+10. In order to make requests, run the `dotnet run` command and use postman. Examples:
+
+    * First, you must login with the post endpoint: https://localhost:5001/api/Auth/Login
+        And add the user in the body:
+
+        ```json
+        // {
+        //   "email": "john@test.com",
+        //   "password": "123456"
+        // }
+
+        {
+            "email": "karl@test.com",
+            "password": "qwerty"
+        }
+        ```
+        <img src="media\login-postman.png" width=700px/>
+
+    * Then as karl can get users, we must pass the token received for Authorization: https://localhost:5001/api/Users/GetUsers
+
+        <img src="media\getusers-postman.png" width=700px/>
+
+    * To get a user by id, you must pass the id as part of the url: https://localhost:5001/api/Users/GetUserById/d1f760c6-d588-4648-8fb2-0dc727cac874
+
+        <img src="media\getuserbyid-postman.png" width=700px/>
+
+    * To create a user, in the body there must go the information for the new user: https://localhost:5001/api/Users/CreateUser
+        ```json
+        {
+          "name": "Paolo",
+          "email": "paolo@test.com",
+          "password": "P40L0",
+          "role": 1
+        }
+        ```
+        <img src="media\createuser-postman.png" width=700px/>
+
+    * To update an user, it's the same way as before: https://localhost:5001/api/Users/UpdateUser/5fce9472-cb47-48cc-a949-e17a65b1942b
+
+        **Before:**
+        ```json
+        {
+            "id": "84709e52-cedd-40fe-bbf9-fe7312cc95d3",
+            "name": "Sammy Silva",
+            "email": "sammy@test.com",
+            "password": "s4mmy",
+            "createdAt": "2023-09-01T14:24:44.99644-05:00",
+            "role": 2,
+            "isActiveRole": true
+        }
+        ```
+
+        **After:**
+        ```json
+        {
+            "name": "Sammy Silva",
+            "email": "sammy@test.com",
+            "password": "s4mmy",
+            "role": 0
+        }
+        ```
+        <img src="media\updateuser-postman.png" width=700px/>
+
+    * Then to delete a user, the user must be a manager, with the current user, it is not possible, so it gives a 403 forbidden response: https://localhost:5001/api/Users/DeleteUser/5fce9472-cb47-48cc-a949-e17a65b1942b
+
+        <img src="media\deleteuser-403forbidden-postman.png" width=700px/>
+
+        But when logging in as the manager: https://localhost:5001/api/Users/DeleteUser/98257d99-2348-4502-886d-722056e479ff
+        ```json
+        {
+            "email": "sammy@test.com",
+            "password": "s4mmy"
+        }
+        ```
+        This is the response:
+
+        <img src="media/deleteuser-200ok-postman.png" width=700px/>
+
+        And if we see all the users, we can see that the user with this id, changed the bool variable IsActiveRole to false:
+
+        <img src="media/getusers-afterdelete-postman.png" width=700px/>
+
 
 # QUESTIONS
 
