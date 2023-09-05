@@ -29,5 +29,5 @@ public interface IOrderService
     /// </summary>
     /// <param name="order">A new order entity</param>
     /// <returns>The created order with an assigned Id</returns>
-    Task <IEnumerable<Order>> CreateOrder(Order order);
+    Task <Order> CreateOrder(Order order);
 }

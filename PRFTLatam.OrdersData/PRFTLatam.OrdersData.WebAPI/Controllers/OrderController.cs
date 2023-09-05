@@ -31,4 +31,12 @@ public class OrderController : ControllerBase
         var orders = await _orderService.GetOrdersByClient(id);
         return orders.Any() ? Ok(orders) : StatusCode(StatusCodes.Status404NotFound, $"There were no orders found to show for the client with id {id}");
     }
+
+    [HttpPost]
+    [Route("CreateOrder")]
+    public async Task<IActionResult> CreateOrder(Order order)
+    {
+        var newOrder = await _orderService.CreateOrder(order);
+        return newOrder != null ? Ok(newOrder) : StatusCode(StatusCodes.Status500InternalServerError, $"There has been an error while creating the order, make sure the ClientId and ProductId fields are not empty");
+    }
 }

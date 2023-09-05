@@ -1,5 +1,7 @@
 using PRFTLatam.OrdersData.Infrastructure.Models;
 using PRFTLatam.OrdersData.Services.IServices;
+using PRFTLatam.OrdersData.Services;
+using System.Diagnostics;
 
 namespace PRFTLatam.OrdersData.Services.Services;
 
@@ -12,9 +14,40 @@ public class OrderService : IOrderService
         _unitOfWork = unitOfWork;
     }
 
-    public Task<IEnumerable<Order>> CreateOrder(Order order)
+    public async Task<Order> CreateOrder(Order order)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // find the client and product to see if they exist
+            var client = await _unitOfWork.ClientRepository.GetAllAsync(x => x.Id.Equals(order.ClientId), null, "Orders");
+            var product = await _unitOfWork.ProductRepository.FindAsync(order.ProductId);
+            if(client.ElementAt(0) == null && product == null)
+            {
+                return null;
+            }
+            else
+            {
+                var todaysOrders = await _unitOfWork.OrderRepository.GetAllAsync(x => x.Date.Date == DateTime.Now.Date, null, "Product");
+                // If there are more than 10 orders for a given date (same day), the order cannot be registered.
+                if (todaysOrders.Count() <= 10)
+                {
+                    // calculate the price of the order
+                    order.Price = product.Price * order.RequiredQuantity;
+
+                    // update the values that change on the client with the new order
+                    client.ElementAt(0).Quota = client.ElementAt(0).Quota - order.Price;
+                    client.ElementAt(0).OrdersTotal = client.ElementAt(0).OrdersTotal + order.Price;
+
+                    await _unitOfWork.OrderRepository.AddAsync(order);
+                    await _unitOfWork.SaveAsync();
+                }
+            }
+        } 
+        catch (Exception ex)
+        {
+            order = null;
+        }
+        return order;
     }
 
     /// <summary>
@@ -45,15 +78,4 @@ public class OrderService : IOrderService
     {
         return await _unitOfWork.OrderRepository.GetAllAsync(x => x.ClientId.Equals(id), null, "Product");
     }
-
-
-    /*
-    SELECT *
-    FROM order
-    LEFT JOIN client ON order.client_id = client.id
-    WHERE order.client_id IS NULL;
-    */
-
-    // https://stackoverflow.com/questions/525194/linq-inner-join-vs-left-join
-    // https://stackoverflow.com/questions/48646568/sql-server-join-where-not-exist-on-other-table#:~:text=You%20can%20you%20use%20an%20intelligent%20left%20join,non%20matching%20rows%20then%20use%20LEFT%20JOIN%20instead
 }

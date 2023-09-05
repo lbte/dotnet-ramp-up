@@ -18,7 +18,7 @@ public class Client
     /// </summary>
     public decimal Quota { get; set; } 
 
-    public virtual ICollection<Order>? Orders { get; set; }
+    public ICollection<Order>? Orders { get; set; }
 
     public decimal OrdersTotal { get; set; }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRFTLatam.OrdersData.WebAPI;
 
@@ -11,9 +12,11 @@ using PRFTLatam.OrdersData.WebAPI;
 namespace PRFTLatam.OrdersData.WebAPI.Migrations
 {
     [DbContext(typeof(OrdersDataContext))]
-    partial class OrdersDataContextModelSnapshot : ModelSnapshot
+    [Migration("20230905194125_AddedDateAttributeToOrder")]
+    partial class AddedDateAttributeToOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

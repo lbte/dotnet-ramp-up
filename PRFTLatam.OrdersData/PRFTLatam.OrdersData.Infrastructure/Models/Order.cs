@@ -8,6 +8,8 @@ public class Order
     [Key]
     public long Id { get; set; }
 
+    public DateTime Date { get; set; } = DateTime.Now;
+
     /// <summary>
     /// The <see cref="Client"/> id this order belongs to
     /// </summary>
