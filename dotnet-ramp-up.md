@@ -1199,6 +1199,125 @@ Para ejecutar:
     var result = FnHigherOrder(600, n => n * 2); // mandando la función lambda tal cual
     ```
 
+## Exercise
+
+* Create a method in the repository that returns the Total Value of Orders per customer.
+
+    Customer1 $10000
+    Client2 $1000
+    Client3 $2000
+
+    Sorted alphabetically by customer name.
+
+    Create a method in the repository that returns the Total Value of Orders per customer, for customers who have no balance.   Ordered from highest to lowest, according to the customer who has the most value in orders.
+
+* Create the method to Create an ORDER. This must modify 2 tables:
+    * On one hand, it must affect the value of the Client's credit, subtracting the value of the order.
+    * On the other hand, you must create the order itself.
+
+    If there are more than 10 orders for a given date (same day), the order cannot be registered.
+
+    Try to write an extension method for the command: ToDate() that returns the date in ISO format YYYYMMDD.​​​​​​
+
+In order to create the order, enter something like the following:
+
+```json
+{
+  "clientId": "1",
+  "productId": 1,
+  "requiredQuantity": 3,
+  "price": 0
+}
+```
+
+Which returns the rest of the fields full:
+
+```json
+{
+  "id": 16,
+  "date": "2023-09-05T17:23:30.4273283-05:00",
+  "clientId": "1",
+  "productId": 1,
+  "product": {
+    "id": 1,
+    "name": "Plant Based Meat",
+    "price": 20000
+  },
+  "requiredQuantity": 3,
+  "price": 60000
+}
+```
+
+And then when getting the clients that are in the DB it shows the following:
+
+```json
+[
+  {
+    "id": "1",
+    "name": "Pedro",
+    "quota": 140000,
+    "orders": [
+      {
+        "id": 16,
+        "date": "2023-09-05T17:23:30.4273283",
+        "clientId": "1",
+        "productId": 1,
+        "product": {
+          "id": 1,
+          "name": "Plant Based Meat",
+          "price": 20000
+        },
+        "requiredQuantity": 3,
+        "price": 60000
+      }
+    ],
+    "ordersTotal": 60000
+  },
+  {
+    "id": "2",
+    "name": "Laura",
+    "quota": 500000,
+    "orders": [],
+    "ordersTotal": 0
+  },
+  {
+    "id": "4",
+    "name": "Felipe",
+    "quota": 950000,
+    "orders": [
+      {
+        "id": 14,
+        "date": "2023-09-05T17:21:30.2262284",
+        "clientId": "4",
+        "productId": 2,
+        "product": {
+          "id": 2,
+          "name": "Soap",
+          "price": 5000
+        },
+        "requiredQuantity": 2,
+        "price": 10000
+      },
+      {
+        "id": 15,
+        "date": "2023-09-05T17:22:05.4536307",
+        "clientId": "4",
+        "productId": 1,
+        "product": {
+          "id": 1,
+          "name": "Plant Based Meat",
+          "price": 20000
+        },
+        "requiredQuantity": 2,
+        "price": 40000
+      }
+    ],
+    "ordersTotal": 50000
+  }
+]
+   
+```
+
 # Code challenges
 
 ## 9. Authentication JWT
