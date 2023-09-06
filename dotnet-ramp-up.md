@@ -1320,6 +1320,95 @@ And then when getting the clients that are in the DB it shows the following:
 
 # Code challenges
 
+## 8. Background service
+
+Create a console app that runs a background process to print the current time of the following cities each 30 seconds.
+
+<table class="bandedRowColumnTableStyleTheme cke_show_border"><tbody><tr><td role="columnheader" style="text-align:center;">City</td><td role="columnheader" style="text-align:center;">TimeZone</td></tr><tr><td role="rowheader">Bogota</td><td>America/Bogota</td></tr><tr><td role="rowheader">Chicago</td><td>America/Chicago</td></tr><tr><td role="rowheader">Argentina</td><td>America/Argentina/Buenos_Aires</td></tr><tr><td role="rowheader">Detroit</td><td>America/Detroit</td></tr><tr><td role="rowheader">London</td><td>America/London</td></tr></tbody></table>
+
+This information should be stored as a private static [read only collection](https://learn.microsoft.com/en-us/dotnet/api/system.collections.objectmodel.readonlycollection-1?view=net-6.0).
+
+Once you read the information you should print the information in the following format.
+
+```
+City: Bogota 
+TimeZone: America/Bogota 
+Time:2022-05-06T14:29:00.5-05:00
+​
+City: Chicago 
+TimeZone: America/Chicago 
+Time: 2022-05-06T14:29:00.5-05:00
+​
+City: Argentina 
+TimeZone: America/Argentina/Buenos_Aires 
+Time: 2022-05-06T16:29:00.5-05:00
+​
+City: Detroit 
+TimeZone: America/Detroit 
+Time: 2022-05-06T15:29:00.5-05:00
+​
+City: London 
+TimeZone: Europe/London 
+Time: 2022-05-06T20:29:00.5-05:00
+```
+
+TimeZone Package: [repo](https://github.com/mattjohnsonpint/TimeZoneConverter)
+TimeZone Country List: [link](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+TimeStringFormat: yyyy-MM-dd'T'HH:mm:ss.FFFzzz
+
+* **Increase Requirement**
+​​
+Encapsulate the time converter implementation in a single class (TimeService/TimeProvider) and inject it in the hosted/background service as Transient, Singleton and then Scoped.
+
+Note: For this one Scoped the idea is to see how this behaves in a hosted service as it is not the same for the others. See more info [here](https://docs.microsoft.com/en-us/dotnet/core/extensions/scoped-service).
+
+* **Increase Requirement**
+​​
+Read the info for the cities from a different source. Instead of having it as a static read only collection read it from a database.
+
+* **Increase Requirement**
+​​​​​
+Display a message once the service is stopped:
+
+```
+"Background service completed"
+```
+
+**​​​​​​​​​​Material**
+​​​​​
+* [Hosted services](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-6.0&tabs=visual-studio)
+* [Worker services in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/workers?pivots=dotnet-7-0)
+* [Running .NET Core Applications as a Windows Service](https://code-maze.com/aspnetcore-running-applications-as-windows-service/)
+
+### [Background tasks with hosted services in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-6.0&tabs=visual-studio)
+
+In ASP.NET Core, background tasks can be implemented as hosted services. A hosted service is a class with background task logic that implements the IHostedService interface.
+
+Hosted service examples:
+
+* Background task that runs on a timer.
+* Hosted service that activates a [scoped service](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0#service-lifetimes). The scoped service can use dependency injection (DI).
+* Queued background tasks that run sequentially.
+
+#### Worker Service template
+The ASP.NET Core Worker Service template provides a starting point for writing long running service apps. An app created from the Worker Service template specifies the Worker SDK in its project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
+
+To use the template as a basis for a hosted services app:
+
+Use the Worker Service (worker) template with the dotnet new command from a command shell. In the following example, a Worker Service app is created named ContosoWorker. A folder for the ContosoWorker app is created automatically when the command is executed.
+
+```shell
+dotnet new worker -o ContosoWorker
+```
+
+#### Package
+An app based on the Worker Service template uses the Microsoft.NET.Sdk.Worker SDK and has an explicit package reference to the [Microsoft.Extensions.Hosting](https://www.nuget.org/packages/Microsoft.Extensions.Hosting) package. For example, see the sample app's project file (BackgroundTasksSample.csproj).
+
+
 ## 9. Authentication JWT
 
 In this folder, you will find a solution with a configured application with the code base of a web API service that manages the user lifecycle operations.
@@ -1378,7 +1467,7 @@ public enum UserRole
 
 
 
-## Related material
+### Related material
 
 <ul>
     <li><a data-cke-saved-href="https://code-maze.com/authentication-aspnetcore-jwt-1/" href="https://code-maze.com/authentication-aspnetcore-jwt-1/">JWT Authentication in ASP.NET Core Web API</a></li>
@@ -1387,7 +1476,7 @@ public enum UserRole
 </ul>
 
 
-## [JWT Authentication in ASP.NET Core Web API](https://code-maze.com/authentication-aspnetcore-jwt-1/)
+### [JWT Authentication in ASP.NET Core Web API](https://code-maze.com/authentication-aspnetcore-jwt-1/)
 
 There is an application that has a login form. A user enters their username, and password and presses the login button. After pressing the login button, a client (eg web browser) sends the user’s data to the server’s API endpoint:
 
@@ -1690,9 +1779,9 @@ http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: "johndoe"
 iss: "https://localhost:5001"
 ```
 
-## [JWT Authentication In ASP.NET Core](https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/)
+### [JWT Authentication In ASP.NET Core](https://www.c-sharpcorner.com/article/jwt-json-web-token-authentication-in-asp-net-core/)
 
-## Implementation
+### Implementation
 
 1. In order to create the project:
 
@@ -1847,6 +1936,8 @@ iss: "https://localhost:5001"
         And if we see all the users, we can see that the user with this id, changed the bool variable IsActiveRole to false:
 
         <img src="media/getusers-afterdelete-postman.png" width=700px/>
+
+
 
 
 # QUESTIONS
