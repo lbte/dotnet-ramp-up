@@ -4,8 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-ContosoWorker-606bcfc9-17f9-4079-9a8a-b0ff862621d4</UserSecretsId>
-    <RootNamespace>ContosoWorker</RootNamespace>
+    <!-- <UserSecretsId>dotnet-ContosoWorker-606bcfc9-17f9-4079-9a8a-b0ff862621d4</UserSecretsId> -->
+    <RootNamespace>TimeZonesBackgroundService</RootNamespace>
     <OutputType>exe</OutputType>
     <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

@@ -1324,7 +1324,7 @@ And then when getting the clients that are in the DB it shows the following:
 
 Create a console app that runs a background process to print the current time of the following cities each 30 seconds.
 
-<table class="bandedRowColumnTableStyleTheme cke_show_border"><tbody><tr><td role="columnheader" style="text-align:center;">City</td><td role="columnheader" style="text-align:center;">TimeZone</td></tr><tr><td role="rowheader">Bogota</td><td>America/Bogota</td></tr><tr><td role="rowheader">Chicago</td><td>America/Chicago</td></tr><tr><td role="rowheader">Argentina</td><td>America/Argentina/Buenos_Aires</td></tr><tr><td role="rowheader">Detroit</td><td>America/Detroit</td></tr><tr><td role="rowheader">London</td><td>America/London</td></tr></tbody></table>
+<table class="bandedRowColumnTableStyleTheme cke_show_border"><tbody><tr><td role="columnheader" style="text-align:center;">City</td><td role="columnheader" style="text-align:center;">TimeZone</td></tr><tr><td role="rowheader">Bogota</td><td>America/Bogota</td></tr><tr><td role="rowheader">Chicago</td><td>America/Chicago</td></tr><tr><td role="rowheader">Argentina</td><td>America/Argentina/Buenos_Aires</td></tr><tr><td role="rowheader">Detroit</td><td>America/Detroit</td></tr><tr><td role="rowheader">London</td><td>Europe/London</td></tr></tbody></table>
 
 This information should be stored as a private static [read only collection](https://learn.microsoft.com/en-us/dotnet/api/system.collections.objectmodel.readonlycollection-1?view=net-6.0).
 
@@ -1356,17 +1356,156 @@ TimeZone Package: [repo](https://github.com/mattjohnsonpint/TimeZoneConverter)
 TimeZone Country List: [link](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 TimeStringFormat: yyyy-MM-dd'T'HH:mm:ss.FFFzzz
 
-* **Increase Requirement**
+### Increase Requirement 1
 ​​
 Encapsulate the time converter implementation in a single class (TimeService/TimeProvider) and inject it in the hosted/background service as Transient, Singleton and then Scoped.
 
 Note: For this one Scoped the idea is to see how this behaves in a hosted service as it is not the same for the others. See more info [here](https://docs.microsoft.com/en-us/dotnet/core/extensions/scoped-service).
 
-* **Increase Requirement**
+#### Encapsulation: TimeService class
+
+Reference: https://learn.microsoft.com/en-us/dotnet/core/extensions/windows-service?pivots=dotnet-6-0
+
+```csharp
+namespace TimeZonesBackgroundService;
+
+public sealed class TimeService
+{
+    public string GetTime()
+    {
+        string bogota = GetTimeZoneDisplayed(timeZonesCollection.ElementAt(0));
+        string chicago = GetTimeZoneDisplayed(timeZonesCollection.ElementAt(1));
+        string argentina = GetTimeZoneDisplayed(timeZonesCollection.ElementAt(2));
+        string detroit = GetTimeZoneDisplayed(timeZonesCollection.ElementAt(3));
+        string london = GetTimeZoneDisplayed(timeZonesCollection.ElementAt(4));
+
+        return $"{bogota}{chicago}{argentina}{detroit}{london}";
+    }
+
+    private string GetTimeZoneDisplayed(TimeZones timeZone)
+    {
+        return $"City: {timeZone.city}\nTimeZone: {timeZone.timeZoneName}\nTime: {timeZone.timeZoneTime.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFzzz")}\n\n"; 
+    }
+
+    private static List<TimeZones> timeZonesList = new(){
+        new TimeZones("Bogota", "America/Bogota", TimeZoneInfo.ConvertTime(DateTime.Now, TZConvert.GetTimeZoneInfo("America/Bogota"))),
+        new TimeZones("Chicago", "America/Chicago", TimeZoneInfo.ConvertTime(DateTime.Now, TZConvert.GetTimeZoneInfo("America/Chicago"))),
+        new TimeZones("Argentina", "America/Argentina/Buenos_Aires", TimeZoneInfo.ConvertTime(DateTime.Now, TZConvert.GetTimeZoneInfo("America/Argentina/Buenos_Aires"))),
+        new TimeZones("Detroit", "America/Detroit", TimeZoneInfo.ConvertTime(DateTime.Now, TZConvert.GetTimeZoneInfo("America/Detroit"))),
+        new TimeZones("London", "Europe/London", TimeZoneInfo.ConvertTime(DateTime.Now, TZConvert.GetTimeZoneInfo("Europe/London")))
+    };
+    private static ReadOnlyCollection<TimeZones> timeZonesCollection = new ReadOnlyCollection<TimeZones>(timeZonesList);
+}
+
+readonly record struct TimeZones(string city, string timeZoneName, DateTime timeZoneTime);
+```
+
+#### Injection as Singleton
+
+```csharp
+using TimeZonesBackgroundService;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .UseWindowsService(options =>
+    {
+        options.ServiceName = ".NET Time Zones Service";
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddSingleton<TimeService>();
+        // services.AddTransient<TimeService>();
+        services.AddHostedService<WindowsBackgroundService>();
+    })
+    .Build();
+
+await host.RunAsync();
+```
+
+#### Background service class updated
+
+```csharp
+using System;
+using TimeZoneConverter;
+using System.Collections.ObjectModel;
+
+namespace TimeZonesBackgroundService;
+
+public sealed class WindowsBackgroundService : BackgroundService
+{
+    private readonly ILogger<WindowsBackgroundService> _logger;
+    private readonly TimeService _timeService;
+
+    public WindowsBackgroundService(ILogger<WindowsBackgroundService> logger, TimeService timeService)
+    {
+        _timeService = timeService;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                string time = _timeService.GetTime();
+                _logger.LogInformation("{time}", time);
+
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            }   
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Message}", ex.Message);
+            Environment.Exit(1);
+        }
+    }
+}
+
+```
+
+#### Publish the service
+
+```shell
+dotnet publish -c Release -r win-x64 --self-contained true
+```
+
+#### Create the Windows Service
+
+To create the Windows Service, use the native Windows Service Control Manager's (sc.exe) create command. Run PowerShell as an Administrator.
+
+```powershell
+sc.exe create ".NET Time Zones Service" binpath="C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\TimeZonesBackgroundService\bin\Release\net6.0\win-x64\publish\WindowsBackgroundService.exe"
+```
+
+#### Start the Windows Service
+
+```powershell
+sc.exe start ".NET Time Zones Service"
+```
+
+#### View logs
+Now every 30 seconds it shows the same result as before
+
+<img src="media\timezones-background-service-event-viewer-result.png" width=700px/>
+
+
+#### Stop the Windows Service
+
+```powershell
+sc.exe stop ".NET Time Zones Service"
+```
+
+#### Remove the windows service
+
+````powershell
+sc.exe delete ".NET Time Zones Service"
+````
+
+### Increase Requirement 2
 ​​
 Read the info for the cities from a different source. Instead of having it as a static read only collection read it from a database.
 
-* **Increase Requirement**
+### Increase Requirement 3
 ​​​​​
 Display a message once the service is stopped:
 
@@ -2308,6 +2447,8 @@ This will remove the service from the system and give the response:
 Now if we check the Services Console, we cannot find the service as it will be completely removed from the system.
 
 ### Implementation
+
+Good resource: https://learn.microsoft.com/en-us/dotnet/core/extensions/windows-service?pivots=dotnet-6-0
 
 #### Create the project and add the packages
 
