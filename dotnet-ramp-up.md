@@ -1380,6 +1380,7 @@ Display a message once the service is stopped:
 * [Worker services in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/workers?pivots=dotnet-7-0)
 * [Running .NET Core Applications as a Windows Service](https://code-maze.com/aspnetcore-running-applications-as-windows-service/)
 
+
 ### [Background tasks with hosted services in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-6.0&tabs=visual-studio)
 
 In ASP.NET Core, background tasks can be implemented as hosted services. A hosted service is a class with background task logic that implements the IHostedService interface.
@@ -1407,6 +1408,1008 @@ dotnet new worker -o ContosoWorker
 
 #### Package
 An app based on the Worker Service template uses the Microsoft.NET.Sdk.Worker SDK and has an explicit package reference to the [Microsoft.Extensions.Hosting](https://www.nuget.org/packages/Microsoft.Extensions.Hosting) package. For example, see the sample app's project file (BackgroundTasksSample.csproj).
+
+
+#### IHostedService interface
+The IHostedService interface defines two methods for objects that are managed by the host. These two methods serve as lifecycle methods - they're called during host start and stop events respectively.:
+
+* **[StartAsync(CancellationToken)](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostedservice.startasync)**: contains the logic to start the background task. StartAsync is called before:
+
+    * The app's request processing pipeline is configured.
+    * The server is started and [IApplicationLifetime.ApplicationStarted](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.hosting.iapplicationlifetime.applicationstarted) is triggered.
+
+    StartAsync should be limited to short running tasks because hosted services are run sequentially, and no further services are started until StartAsync runs to completion.
+
+* **[StopAsync(CancellationToken)](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostedservice.stopasync)**: is triggered when the host is performing a graceful shutdown. StopAsync contains the logic to end the background task. Implement IDisposable and finalizers (destructors) to dispose of any unmanaged resources.
+
+> When overriding either StartAsync or StopAsync methods, you must call and await the base class method to ensure the service starts and/or shuts down properly.
+
+The cancellation token has a default 30 second timeout to indicate that the shutdown process should no longer be graceful. When cancellation is requested on the token:
+
+* Any remaining background operations that the app is performing should be aborted.
+* Any methods called in StopAsync should return promptly.
+
+However, tasks aren't abandoned after cancellation is requested—the caller awaits all tasks to complete.
+
+If the app shuts down unexpectedly (for example, the app's process fails), StopAsync might not be called. Therefore, any methods called or operations conducted in StopAsync might not occur.
+
+To extend the default 30 second shutdown timeout, set:
+
+* [ShutdownTimeout](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.hostoptions.shutdowntimeout) when using Generic Host. For more information, see [.NET Generic Host in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-6.0#shutdowntimeout).
+* Shutdown timeout host configuration setting when using Web Host. For more information, see [ASP.NET Core Web Host](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-6.0#shutdown-timeout).
+
+The hosted service is activated once at app startup and gracefully shut down at app shutdown. If an error is thrown during background task execution, Dispose should be called even if StopAsync isn't called.
+
+#### BackgroundService base class
+
+BackgroundService is a base class for implementing a long running IHostedService.
+
+ExecuteAsync(CancellationToken) is called to run the background service. The implementation returns a Task that represents the entire lifetime of the background service. No further services are started until ExecuteAsync becomes asynchronous, such as by calling await. Avoid performing long, blocking initialization work in ExecuteAsync. The host blocks in StopAsync(CancellationToken) waiting for ExecuteAsync to complete.
+
+The cancellation token is triggered when IHostedService.StopAsync is called. Your implementation of ExecuteAsync should finish promptly when the cancellation token is fired in order to gracefully shut down the service. Otherwise, the service ungracefully shuts down at the shutdown timeout. For more information, see the IHostedService interface section.
+
+#### Timed background tasks
+A timed background task makes use of the System.Threading.Timer class. The timer triggers the task's DoWork method. The timer is disabled on StopAsync and disposed when the service container is disposed on Dispose:
+
+```csharp
+public class TimedHostedService : IHostedService, IDisposable
+{
+    private int executionCount = 0;
+    private readonly ILogger<TimedHostedService> _logger;
+    private Timer? _timer = null;
+
+    public TimedHostedService(ILogger<TimedHostedService> logger)
+    {
+        _logger = logger;
+    }
+
+    public Task StartAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Timed Hosted Service running.");
+
+        _timer = new Timer(DoWork, null, TimeSpan.Zero,
+            TimeSpan.FromSeconds(5));
+
+        return Task.CompletedTask;
+    }
+
+    private void DoWork(object? state)
+    {
+        var count = Interlocked.Increment(ref executionCount);
+
+        _logger.LogInformation(
+            "Timed Hosted Service is working. Count: {Count}", count);
+    }
+
+    public Task StopAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Timed Hosted Service is stopping.");
+
+        _timer?.Change(Timeout.Infinite, 0);
+
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
+```
+
+The Timer doesn't wait for previous executions of DoWork to finish, so the approach shown might not be suitable for every scenario. Interlocked.Increment is used to increment the execution counter as an atomic operation, which ensures that multiple threads don't update executionCount concurrently.
+
+The service is registered in IHostBuilder.ConfigureServices (Program.cs) with the AddHostedService extension method:
+
+```csharp
+services.AddHostedService<TimedHostedService>();
+```
+
+#### Consuming a scoped service in a background task
+To use scoped services within a BackgroundService, create a scope. No scope is created for a hosted service by default.
+
+The scoped background task service contains the background task's logic. In the following example:
+
+* The service is asynchronous. The DoWork method returns a Task. For demonstration purposes, a delay of ten seconds is awaited in the DoWork method.
+* An ILogger is injected into the service.
+
+```csharp
+internal interface IScopedProcessingService
+{
+    Task DoWork(CancellationToken stoppingToken);
+}
+
+internal class ScopedProcessingService : IScopedProcessingService
+{
+    private int executionCount = 0;
+    private readonly ILogger _logger;
+    
+    public ScopedProcessingService(ILogger<ScopedProcessingService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task DoWork(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            executionCount++;
+
+            _logger.LogInformation(
+                "Scoped Processing Service is working. Count: {Count}", executionCount);
+
+            await Task.Delay(10000, stoppingToken);
+        }
+    }
+}
+```
+
+The hosted service creates a scope to resolve the scoped background task service to call its DoWork method. DoWork returns a Task, which is awaited in ExecuteAsync:
+
+```csharp
+public class ConsumeScopedServiceHostedService : BackgroundService
+{
+    private readonly ILogger<ConsumeScopedServiceHostedService> _logger;
+
+    public ConsumeScopedServiceHostedService(IServiceProvider services, 
+        ILogger<ConsumeScopedServiceHostedService> logger)
+    {
+        Services = services;
+        _logger = logger;
+    }
+
+    public IServiceProvider Services { get; }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            "Consume Scoped Service Hosted Service running.");
+
+        await DoWork(stoppingToken);
+    }
+
+    private async Task DoWork(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            "Consume Scoped Service Hosted Service is working.");
+
+        using (var scope = Services.CreateScope())
+        {
+            var scopedProcessingService = 
+                scope.ServiceProvider
+                    .GetRequiredService<IScopedProcessingService>();
+
+            await scopedProcessingService.DoWork(stoppingToken);
+        }
+    }
+
+    public override async Task StopAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            "Consume Scoped Service Hosted Service is stopping.");
+
+        await base.StopAsync(stoppingToken);
+    }
+}
+```
+
+The services are registered in IHostBuilder.ConfigureServices (Program.cs). The hosted service is registered with the AddHostedService extension method:
+
+```csharp
+services.AddHostedService<ConsumeScopedServiceHostedService>();
+services.AddScoped<IScopedProcessingService, ScopedProcessingService>();
+```
+
+#### Queued background tasks
+A background task queue is based on the .NET 4.x QueueBackgroundWorkItem:
+
+```csharp
+public interface IBackgroundTaskQueue
+{
+    ValueTask QueueBackgroundWorkItemAsync(Func<CancellationToken, ValueTask> workItem);
+
+    ValueTask<Func<CancellationToken, ValueTask>> DequeueAsync(
+        CancellationToken cancellationToken);
+}
+
+public class BackgroundTaskQueue : IBackgroundTaskQueue
+{
+    private readonly Channel<Func<CancellationToken, ValueTask>> _queue;
+
+    public BackgroundTaskQueue(int capacity)
+    {
+        // Capacity should be set based on the expected application load and
+        // number of concurrent threads accessing the queue.            
+        // BoundedChannelFullMode.Wait will cause calls to WriteAsync() to return a task,
+        // which completes only when space became available. This leads to backpressure,
+        // in case too many publishers/calls start accumulating.
+        var options = new BoundedChannelOptions(capacity)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        };
+        _queue = Channel.CreateBounded<Func<CancellationToken, ValueTask>>(options);
+    }
+
+    public async ValueTask QueueBackgroundWorkItemAsync(
+        Func<CancellationToken, ValueTask> workItem)
+    {
+        if (workItem == null)
+        {
+            throw new ArgumentNullException(nameof(workItem));
+        }
+
+        await _queue.Writer.WriteAsync(workItem);
+    }
+
+    public async ValueTask<Func<CancellationToken, ValueTask>> DequeueAsync(
+        CancellationToken cancellationToken)
+    {
+        var workItem = await _queue.Reader.ReadAsync(cancellationToken);
+
+        return workItem;
+    }
+}
+```
+
+In the following QueueHostedService example:
+
+* The BackgroundProcessing method returns a Task, which is awaited in ExecuteAsync.
+* Background tasks in the queue are dequeued and executed in BackgroundProcessing.
+* Work items are awaited before the service stops in StopAsync.
+
+```csharp
+public class QueuedHostedService : BackgroundService
+{
+    private readonly ILogger<QueuedHostedService> _logger;
+
+    public QueuedHostedService(IBackgroundTaskQueue taskQueue, 
+        ILogger<QueuedHostedService> logger)
+    {
+        TaskQueue = taskQueue;
+        _logger = logger;
+    }
+
+    public IBackgroundTaskQueue TaskQueue { get; }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            $"Queued Hosted Service is running.{Environment.NewLine}" +
+            $"{Environment.NewLine}Tap W to add a work item to the " +
+            $"background queue.{Environment.NewLine}");
+
+        await BackgroundProcessing(stoppingToken);
+    }
+
+    private async Task BackgroundProcessing(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var workItem = 
+                await TaskQueue.DequeueAsync(stoppingToken);
+
+            try
+            {
+                await workItem(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, 
+                    "Error occurred executing {WorkItem}.", nameof(workItem));
+            }
+        }
+    }
+
+    public override async Task StopAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Queued Hosted Service is stopping.");
+
+        await base.StopAsync(stoppingToken);
+    }
+}
+```
+A MonitorLoop service handles enqueuing tasks for the hosted service whenever the w key is selected on an input device:
+
+* The IBackgroundTaskQueue is injected into the MonitorLoop service.
+* IBackgroundTaskQueue.QueueBackgroundWorkItem is called to enqueue a work item.
+* The work item simulates a long-running background task:
+    * Three 5-second delays are executed (Task.Delay).
+    * A try-catch statement traps OperationCanceledException if the task is cancelled.
+
+```csharp
+public class MonitorLoop
+{
+    private readonly IBackgroundTaskQueue _taskQueue;
+    private readonly ILogger _logger;
+    private readonly CancellationToken _cancellationToken;
+
+    public MonitorLoop(IBackgroundTaskQueue taskQueue,
+        ILogger<MonitorLoop> logger,
+        IHostApplicationLifetime applicationLifetime)
+    {
+        _taskQueue = taskQueue;
+        _logger = logger;
+        _cancellationToken = applicationLifetime.ApplicationStopping;
+    }
+
+    public void StartMonitorLoop()
+    {
+        _logger.LogInformation("MonitorAsync Loop is starting.");
+
+        // Run a console user input loop in a background thread
+        Task.Run(async () => await MonitorAsync());
+    }
+
+    private async ValueTask MonitorAsync()
+    {
+        while (!_cancellationToken.IsCancellationRequested)
+        {
+            var keyStroke = Console.ReadKey();
+
+            if (keyStroke.Key == ConsoleKey.W)
+            {
+                // Enqueue a background work item
+                await _taskQueue.QueueBackgroundWorkItemAsync(BuildWorkItem);
+            }
+        }
+    }
+
+    private async ValueTask BuildWorkItem(CancellationToken token)
+    {
+        // Simulate three 5-second tasks to complete
+        // for each enqueued work item
+
+        int delayLoop = 0;
+        var guid = Guid.NewGuid().ToString();
+
+        _logger.LogInformation("Queued Background Task {Guid} is starting.", guid);
+
+        while (!token.IsCancellationRequested && delayLoop < 3)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Prevent throwing if the Delay is cancelled
+            }
+
+            delayLoop++;
+
+            _logger.LogInformation("Queued Background Task {Guid} is running. " 
+                                   + "{DelayLoop}/3", guid, delayLoop);
+        }
+
+        if (delayLoop == 3)
+        {
+            _logger.LogInformation("Queued Background Task {Guid} is complete.", guid);
+        }
+        else
+        {
+            _logger.LogInformation("Queued Background Task {Guid} was cancelled.", guid);
+        }
+    }
+}
+```
+
+The services are registered in IHostBuilder.ConfigureServices (Program.cs). The hosted service is registered with the AddHostedService extension method:
+
+```csharp
+services.AddSingleton<MonitorLoop>();
+services.AddHostedService<QueuedHostedService>();
+services.AddSingleton<IBackgroundTaskQueue>(ctx =>
+{
+    if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
+        queueCapacity = 100;
+    return new BackgroundTaskQueue(queueCapacity);
+});
+```
+
+MonitorLoop is started in Program.cs:
+
+```csharp
+var monitorLoop = host.Services.GetRequiredService<MonitorLoop>();
+monitorLoop.StartMonitorLoop();
+```
+
+#### Asynchronous timed background task
+The following code creates an asynchronous timed background task:
+
+```csharp
+namespace TimedBackgroundTasks;
+
+public class TimedHostedService : BackgroundService
+{
+    private readonly ILogger<TimedHostedService> _logger;
+    private int _executionCount;
+
+    public TimedHostedService(ILogger<TimedHostedService> logger)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Timed Hosted Service running.");
+
+        // When the timer should have no due-time, then do the work once now.
+        DoWork();
+
+        using PeriodicTimer timer = new(TimeSpan.FromSeconds(1));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                DoWork();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Timed Hosted Service is stopping.");
+        }
+    }
+
+    // Could also be a async method, that can be awaited in ExecuteAsync above
+    private void DoWork()
+    {
+        int count = Interlocked.Increment(ref _executionCount);
+
+        _logger.LogInformation("Timed Hosted Service is working. Count: {Count}", count);
+    }
+}
+```
+
+### [Worker services in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/workers?pivots=dotnet-6-0)
+
+There are numerous reasons for creating long-running services such as:
+
+* Processing CPU-intensive data.
+* Queuing work items in the background.
+* Performing a time-based operation on a schedule.
+
+Background service processing usually doesn't involve a user interface (UI), but UIs can be built around them. With .NET, you can use the BackgroundService, which is an implementation of IHostedService, or implement your own.
+
+With .NET, you're no longer restricted to Windows. You can develop cross-platform background services. Hosted services are logging, configuration, and dependency injection (DI) ready. They're a part of the extensions suite of libraries, meaning they're fundamental to all .NET workloads that work with the generic host.
+
+#### Terminology
+
+* **Background Service:** Refers to the BackgroundService type.
+* **Hosted Service:** Implementations of IHostedService, or referring to the IHostedService itself.
+* **Long-running Service:** Any service that runs continuously.
+* **Windows Service:** The Windows Service infrastructure, originally .NET Framework centric but now accessible via .NET.
+* **Worker Service:** Refers to the Worker Service template.
+
+#### Worker Service template
+
+The template consists of a Program and Worker class.
+
+```csharp
+using App.WorkerService;
+
+IHostBuilder builder = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+    });
+
+IHost host = builder.Build();
+host.Run();
+```
+The preceding Program class:
+
+* Creates a [HostApplicationBuilder](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.hostapplicationbuilder).
+* Calls [AddHostedService](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionhostedserviceextensions.addhostedservice) to register the Worker as a hosted service.
+* Builds an IHost from the builder.
+* Calls Run on the host instance, which runs the app.
+
+
+> By default the Worker template doesn't enable server garbage collection (GC). All of the scenarios that require long-running services should consider performance implications of this default. To enable server GC, add the ServerGarbageCollection node to the project file:
+```xml
+<PropertyGroup>
+     <ServerGarbageCollection>true</ServerGarbageCollection>
+</PropertyGroup>
+```
+
+As for the Worker, the template provides a simple implementation.
+
+```csharp
+namespace App.WorkerService;
+
+public sealed class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _logger;
+
+    public Worker(ILogger<Worker> logger)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            await Task.Delay(1_000, stoppingToken);
+        }
+    }
+}
+```
+
+The preceding Worker class is a subclass of BackgroundService, which implements IHostedService. The BackgroundService is an abstract class and requires the subclass to implement BackgroundService.ExecuteAsync(CancellationToken). In the template implementation, the ExecuteAsync loops once per second, logging the current date and time until the process is signaled to cancel.
+
+#### The project file
+The Worker template relies on the following project file Sdk:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
+
+#### Containers and cloud adaptability
+With most modern .NET workloads, containers are a viable option. When creating a long-running service from the Worker template in Visual Studio, you can opt in to Docker support. Doing so creates a Dockerfile that containerizes your .NET app. A Dockerfile is a set of instructions to build an image. For .NET apps, the Dockerfile usually sits in the root of the directory next to a solution file.
+
+```Dockerfile
+# See https://aka.ms/containerfastmode to understand how Visual Studio uses this
+# Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+COPY ["background-service/App.WorkerService.csproj", "background-service/"]
+RUN dotnet restore "background-service/App.WorkerService.csproj"
+COPY . .
+WORKDIR "/src/background-service"
+RUN dotnet build "App.WorkerService.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "App.WorkerService.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "App.WorkerService.dll"]
+```
+
+The preceding Dockerfile steps include:
+
+* Setting the base image from mcr.microsoft.com/dotnet/runtime:6.0 as the alias base.
+* Changing the working directory to /app.
+* Setting the build alias from the mcr.microsoft.com/dotnet/sdk:6.0 image.
+* Changing the working directory to /src.
+* Copying the contents and publishing the .NET app:
+* The app is published using the dotnet publish command.
+* Relayering the .NET SDK image from mcr.microsoft.com/dotnet/runtime:6.0 (the base alias).
+* Copying the published build output from the /publish.
+* Defining the entry point, which delegates to dotnet App.BackgroundService.dll.
+
+> The MCR in mcr.microsoft.com stands for "Microsoft Container Registry", and is Microsoft's syndicated container catalog from the official Docker hub. 
+
+When you target Docker as a deployment strategy for your .NET Worker Service, there are a few considerations in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>true</ImplicitUsings>
+    <RootNamespace>App.WorkerService</RootNamespace>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+  </ItemGroup>
+</Project>
+```
+In the preceding project file, the `<DockerDefaultTargetOS>` element specifies Linux as its target. To target Windows containers, use Windows instead. The [Microsoft.VisualStudio.Azure.Containers.Tools.Targets NuGet package](https://www.nuget.org/packages/Microsoft.VisualStudio.Azure.Containers.Tools.Targets) is automatically added as a package reference when Docker support is selected from the template.
+
+For more information on Docker with .NET, see [Tutorial: Containerize a .NET app](https://learn.microsoft.com/en-us/dotnet/core/docker/build-container). For more information on deploying to Azure, see [Tutorial: Deploy a Worker Service to Azure](https://learn.microsoft.com/en-us/dotnet/core/extensions/cloud-service).
+
+#### Signal completion
+In most common scenarios, you don't need to explicitly signal the completion of a hosted service. When the host starts the services, they're designed to run until the host is stopped. In some scenarios, however, you may need to signal the completion of the entire host application when the service completes. To signal the completion, consider the following Worker class:
+
+```csharp
+namespace App.SignalCompletionService;
+
+public sealed class Worker : BackgroundService
+{
+    private readonly IHostApplicationLifetime _hostApplicationLifetime;
+    private readonly ILogger<Worker> _logger;
+
+    public Worker(
+        IHostApplicationLifetime hostApplicationLifetime, ILogger<Worker> logger) =>
+        (_hostApplicationLifetime, _logger) = (hostApplicationLifetime, logger);
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        // TODO: implement single execution logic here.
+        _logger.LogInformation(
+            "Worker running at: {time}", DateTimeOffset.Now);
+
+        await Task.Delay(1000, stoppingToken);
+
+        // When completed, the entire app host will stop.
+        _hostApplicationLifetime.StopApplication();
+    }
+}
+```
+
+In the preceding code, the ExecuteAsync method doesn't loop, and when it's complete it calls IHostApplicationLifetime.StopApplication().
+
+> This will signal to the host that it should stop, and without this call to StopApplication the host will continue to run indefinitely.
+
+
+### [Running .NET Core Applications as a Windows Service](https://code-maze.com/aspnetcore-running-applications-as-windows-service/)
+
+#### Windows Services in .NET Core
+We may want to create long-running background services in .NET in specific scenarios. For instance, we might want to perform some processor-intensive tasks, queue some operations in the background or schedule some operations to execute at a later time. For all these purposes, we can make use of the BackgroundService class in .NET, which implements the IHostedService interface.
+
+For implementing long-running services, we can create a class inheriting from the BackgroundService abstract class. Along with that, we’ll have to provide an implementation for the ExecuteAsync() method, which runs when the service starts. While implementing the ExecuteAsync() method, it should return a Task that represents the lifetime of the long-running operation. There is also an option to create our custom background service class by implementing the IHostedService interface if we wish to have more control over the background service functionality. 
+
+The background services that we create in .NET are cross-platform and support the inbuilt .NET features like logging, configuration, dependency injection, etc.
+
+#### Creating the Project
+For creating background services, we can use the Worker Service Template that is available with both the .NET CLI and Visual Studio. Worker Services allows for running background services through the use of a hosted service.
+
+```shell
+dotnet new worker -o ContosoWorker
+```
+
+#### The Worker Service Template in .NET
+A project we create using the worker service template will consist of 2 files – the Program class and the Worker class.
+
+The Program class will contain the code to add the Worker class as a hosted service and run it:
+
+```csharp
+using ContosoWorker;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+    })
+    .Build();
+
+await host.RunAsync();
+```
+
+As we mentioned while explaining the windows services, any service that we implement should either inherit from the BackgroundService class or a custom implementation of it. Here, the Worker class contains the code for the service and it inherits from the BackgroundService class, which in turn implements the IHostedService interface:
+
+```csharp
+namespace ContosoWorker;
+
+public class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _logger;
+
+    public Worker(ILogger<Worker> logger)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            await Task.Delay(1000, stoppingToken);
+        }
+    }
+}
+
+```
+An instance of ILogger is injected into the Worker class for the logging support. Additionally, there is the ExecuteAsync() method, which runs when the service starts. The default implementation of this method in the project template runs in a loop every second, logging the current date and time.
+
+The Worker Service Template will provide the code for a simple background service and we can modify it to suit our requirements.
+
+#### Configuring the Project
+To have the support to host our application as a windows service, first, we need to install the Microsoft.Extensions.Hosting.WindowsServices NuGet package:
+
+```shell
+cd .\ContosoWorker\
+dotnet add package Microsoft.Extensions.Hosting.WindowsServices
+```
+
+After that, we need to modify the Program class by adding the UseWindowsService() class:
+
+```csharp
+using ContosoWorker;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .UseWindowsService(options =>
+    {
+        options.ServiceName = "Contoso Worker Service";
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+    })
+    .Build();
+
+await host.RunAsync();
+
+```
+
+The UseWindowsService() extension method configures the application to work as a windows service. Along with that, we have set the service name using the options.ServiceName property.
+
+Similarly, let’s modify the ExecuteAsync() method of the  Worker class to customize the log message:
+
+```csharp
+protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Contoso Worker Service running at: {time}", DateTimeOffset.Now);
+            await Task.Delay(30000, stoppingToken);
+        }
+    }
+```
+
+Along with that, we change the logging interval to 30 seconds as well. Now the service will log the message once every 30 seconds.
+
+By default, the windows service will write logs into the Application Event Log and we can use the Event Viewer tool for viewing those. Also, by default, a windows service will write only logs of severity Warning and above into the Event Log. That said, we can configure this behavior in the appsettings file: 
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    },
+    "EventLog": {
+      "LogLevel": {
+        "Default": "Information"
+      }
+    }
+  }
+}
+
+```
+By adding a new section for the Event Log, we can change the default Log Level to Information, which will log the information as well.
+
+#### Publishing the Project
+
+To create the .NET Worker Service app as a Windows Service, it's recommended that you publish the app as a single file executable. It's less error-prone to have a self-contained executable, as there aren't any dependent files lying around the file system.
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-ContosoWorker-606bcfc9-17f9-4079-9a8a-b0ff862621d4</UserSecretsId>
+    <RootNamespace>ContosoWorker</RootNamespace>
+    <OutputType>exe</OutputType>
+    <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.1" />
+    <PackageReference Include="TimeZoneConverter" Version="6.1.0" />
+  </ItemGroup>
+</Project>
+
+```
+The preceding highlighted lines of the project file define the following behaviors:
+
+`<OutputType>exe</OutputType>`: Creates a console application.
+`<PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>`: Enables single-file publishing.
+`<RuntimeIdentifier>win-x64</RuntimeIdentifier>`: Specifies the RID of win-x64.
+`<PlatformTarget>x64</PlatformTarget>`: Specify the target platform CPU of 64-bit.
+
+You could use the .NET CLI to publish the app:
+
+```shell
+dotnet publish --output "C:\custom\publish\directory"
+```
+This will produce a standalone executable output of the service in the specified folder location.
+
+#### Creating the Windows Service
+
+For creating a Windows Service, we can use the Windows Service Control Manager (sc.exe) tool. The service control manager operations require higher permissions as we are working directly with the operating system and hence we need to run the commands in a Windows PowerShell console with Administrator privilege.
+
+In the PowerShell console, we can use the sc.exe create command and provide the service name and path as arguments:
+
+```powershell
+sc.exe create "Contoso Service" binpath="C:\service\ContosoWorkerService.exe"
+```
+
+Once the command executes successfully, it will create a new windows service with the name Code-Maze Service and return the output:
+
+        [SC] CreateService SUCCESS
+
+We can verify the newly created service in the Windows Service Management Console:
+
+<img src="https://code-maze.com/wp-content/uploads/2022/06/windows-service-running.png"/>
+
+By default, the service might be in the stopped state and we will have to start it manually by using the sc.exe start command:
+
+```powershell
+sc.exe start "Code-Maze Service"
+```
+
+Once the command executes successfully, it will provide an output similar to this one:
+
+```shell
+SERVICE_NAME: Code-Maze Service
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 2  START_PENDING
+                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x7d0
+        PID                : 6720
+        FLAGS
+```
+
+This will start the windows service and it will continue to run in the background.
+
+#### Verifying the Windows Service
+Now we are going to verify that the windows service works as expected. For that, let’s open the Event Viewer.
+
+Remember that we implemented the service to write a log once every minute. Within the Event Viewer, we can find the logs in the Windows Logs -> Application node. We are going to see a bunch of events related to our service there:
+
+<img src="https://code-maze.com/wp-content/uploads/2022/06/windows-services-event-log-e1655967615853.png"/>
+
+As soon as the service starts, the Windows Service Manager logs an event with the source as the service name. The first event with the source name Code-Maze Service corresponds to that. We can verify this by opening that event. The event details will contain the corresponding message and details:
+
+<img src="https://code-maze.com/wp-content/uploads/2022/06/windows-service-started-event.png"/>
+
+Apart from that, while the service is running, it logs an event every minute with the source matching the app’s namespace. All the subsequent events with the source name CodeMazeWorkerService correspond to those. We can verify this by opening those events. Those events will contain the message that the service logs:
+
+<img src="https://code-maze.com/wp-content/uploads/2022/06/windows-service-log-event.png"/>
+
+#### Removing the Windows Service
+Once we create a windows service, it keeps on running in the background. For removing a windows service from the system, we have to first stop it and then delete it.
+
+For stopping a windows service, we can use the sc.exe stop command: 
+
+```powershell
+sc.exe stop "Code-Maze Service"
+```
+
+This will stop the service and provide a similar response:
+
+```shell
+SERVICE_NAME: Code-Maze Service
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 3  STOP_PENDING
+                                (STOPPABLE, NOT_PAUSABLE, ACCEPTS_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+```
+
+Even though this will stop the service, we can still find the service in the Services Console. This is particularly useful when we just need to stop the service temporarily and may want to start it later.
+
+On the other hand, if we no longer need the service, we can delete it using the sc.exe delete command:
+
+````powershell
+sc.exe delete "Code-Maze Service"
+````
+
+This will remove the service from the system and give the response:
+
+````shell
+[SC] DeleteService SUCCESS
+````
+
+Now if we check the Services Console, we cannot find the service as it will be completely removed from the system.
+
+### Implementation
+
+#### Create the project and add the packages
+
+```shell
+dotnet new worker -o ContosoWorker
+cd .\ContosoWorker\
+dotnet add package Microsoft.Extensions.Hosting.WindowsServices
+dotnet add package TimeZoneConverter
+```
+
+Write the code
+
+#### Publish the app
+
+Add the following to the csproj file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-ContosoWorker-606bcfc9-17f9-4079-9a8a-b0ff862621d4</UserSecretsId>
+    
+    <RootNamespace>ContosoWorker</RootNamespace>
+    <OutputType>exe</OutputType>
+    <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+
+  </PropertyGroup>
+```
+The preceding highlighted lines of the project file define the following behaviors:
+
+`<OutputType>exe</OutputType>`: Creates a console application.
+`<PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>`: Enables single-file publishing.
+`<RuntimeIdentifier>win-x64</RuntimeIdentifier>`: Specifies the RID of win-x64.
+`<PlatformTarget>x64</PlatformTarget>`: Specify the target platform CPU of 64-bit.
+
+You could use the .NET CLI to publish the app:
+
+```shell
+dotnet publish -c Release -r win-x64 --self-contained true
+```
+
+#### Create the Windows Service
+
+To create the Windows Service, use the native Windows Service Control Manager's (sc.exe) create command. Run PowerShell as an Administrator.
+
+```powershell
+sc.exe create "Contoso Background Service" binpath="C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\ContosoWorker\bin\Release\net6.0\win-x64\publish\ContosoWorker.exe"
+```
+<img src="media\create-windows-service.png" width=700px/>
+
+We can verify the newly created service in the Services app:
+
+<img src="media\contoso-background-service-services-manager.png" width=700px/>
+
+To verify that the service is functioning as expected, you need to:
+
+* Start the service
+* View the logs
+* Stop the service
+
+#### Start the Windows Service
+To start the Windows Service, use the sc.exe start command:
+
+```powershell
+sc.exe start "Contoso Background Service"
+```
+
+Output:
+
+```shell
+SERVICE_NAME: Contoso Background Service
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 2  START_PENDING
+                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x7d0
+        PID                : 21056
+        FLAGS              :
+```
+The service Status will transition out of START_PENDING to Running.
+
+#### View logs
+To view logs, open the Event Viewer. Search for "Event Viewer" app. Select the Event Viewer (Local) > Windows Logs > Application node. You should see a Warning level entry with a Source matching the apps namespace. Double-click the entry, or right-click and select Event Properties to view the details.
+
+And we can see we get the expected output.
+
+<img src="media\contoso-background-service-event-viewer-result.png" width=700px/>
+
+
+#### Stop the Windows Service
+To stop the Windows Service, use the sc.exe stop command:
+
+```powershell
+sc.exe stop "Contoso Background Service"
+```
 
 
 ## 9. Authentication JWT
@@ -1945,6 +2948,11 @@ iss: "https://localhost:5001"
 ```csharp
 
 ```
+
+```powershell
+
+```
+<img src="" width=700px/>
 
 1. No entiendo cómo el enunciado del ejercicio que piden hacer en la semana 3 de la web api
 
