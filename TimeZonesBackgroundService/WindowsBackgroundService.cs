@@ -30,6 +30,13 @@ public sealed class WindowsBackgroundService : BackgroundService
             await scopedTimeService.DoWorkAsync(stoppingToken);
         }
     }
+
+    public override async Task StopAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation($"{nameof(WindowsBackgroundService)} completed");
+
+        await base.StopAsync(stoppingToken);
+    }
 }
 
 

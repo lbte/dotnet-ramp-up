@@ -1513,6 +1513,22 @@ Display a message once the service is stopped:
 "Background service completed"
 ```
 
+#### Override the method in the windows background service class:
+
+```csharp
+public override async Task StopAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation($"{nameof(WindowsBackgroundService)} completed");
+
+        await base.StopAsync(stoppingToken);
+    }
+```
+
+The way it's shown:
+
+<img src="media\timezones-background-service-requirement-3.png" width=700px/>
+
+
 **​​​​​​​​​​Material**
 ​​​​​
 * [Hosted services](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-6.0&tabs=visual-studio)
