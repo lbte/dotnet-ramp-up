@@ -1362,12 +1362,225 @@ The solution should expose the capability of
 * Delete a developer by passing the email
 * Update the developer information: For this the payload can be the same passed in the create developer and the validations should be the same
 
+### Implentation
+
+#### Create project
+
+```shell
+mkdir PRFTLatam.EmploymentInfo
+cd .\PRFTLatam.EmploymentInfo\
+dotnet new sln -n PRFTLatam.EmploymentInfo
+dotnet new webapi -o PRFTLatam.EmploymentInfo.Infrastructure
+dotnet new classlib -o PRFTLatam.EmploymentInfo.Application
+dotnet new classlib -o PRFTLatam.EmploymentInfo.Domain
+dotnet sln add PRFTLatam.EmploymentInfo.Infrastructure/
+dotnet sln add PRFTLatam.EmploymentInfo.Application/
+dotnet sln add PRFTLatam.EmploymentInfo.Domain/
+dotnet build
+```
+
+<img src="https://miro.medium.com/max/1104/1*VhTqNKaR2gBsWXefCEV7Ig.png" width=700px/>
+
+#### Create generic repository, unit of work and context
+
+Add EntityFrameworkCore related packages to Domain:
+
+    ``` shell
+    dotnet add package Microsoft.EntityFrameworkCore
+    dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+    dotnet add package Microsoft.EntityFrameworkCore.Tools 
+    ```
+
+#### Create Developer model, service and controller
+
+Add references to the different projects
+
+```shell
+dotnet add PRFTLatam.EmploymentInfo.Application/ reference PRFTLatam.EmploymentInfo.Domain/
+dotnet add PRFTLatam.EmploymentInfo.Infrastructure/ reference PRFTLatam.EmploymentInfo.Application/
+dotnet add PRFTLatam.EmploymentInfo.Infrastructure/ reference PRFTLatam.EmploymentInfo.Domain/
+```
+
 ### Material
 * [RESTful web API design](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design)
 * [Get started with Swashbuckle and ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-6.0&tabs=visual-studio)
 * [Generic Repository & Unit Of Work Patterns in .NET](https://tomasznowok.medium.com/generic-repository-unit-of-work-patterns-in-net-b830b7fb5668)
 * [Repository Pattern in .NET Core](https://www.programmingwithwolfgang.com/repository-pattern-net-core/)
 * ​​​​​​[Options pattern in ASP.NET Core](​https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-6.0)
+
+* [**StatusCodes Class**](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.statuscodes?view=aspnetcore-7.0)
+
+### [RESTful web API design](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design)
+
+#### Define API operations in terms of HTTP methods
+
+The effect of a specific request should depend on whether the resource is a collection or an individual item. The following table summarizes the common conventions adopted by most RESTful implementations using the e-commerce example. Not all of these requests might be implemented—it depends on the specific scenario.
+
+<table aria-label="Table 1" class="table table-sm">
+<thead>
+<tr>
+<th><strong>Resource</strong></th>
+<th><strong>POST</strong></th>
+<th><strong>GET</strong></th>
+<th><strong>PUT</strong></th>
+<th><strong>DELETE</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/customers</td>
+<td>Create a new customer</td>
+<td>Retrieve all customers</td>
+<td>Bulk update of customers</td>
+<td>Remove all customers</td>
+</tr>
+<tr>
+<td>/customers/1</td>
+<td>Error</td>
+<td>Retrieve the details for customer 1</td>
+<td>Update the details of customer 1 if it exists</td>
+<td>Remove customer 1</td>
+</tr>
+<tr>
+<td>/customers/1/orders</td>
+<td>Create a new order for customer 1</td>
+<td>Retrieve all orders for customer 1</td>
+<td>Bulk update of orders for customer 1</td>
+<td>Remove all orders for customer 1</td>
+</tr>
+</tbody>
+</table>
+
+#### GET methods
+A successful GET method typically returns HTTP status code 200 (OK). If the resource cannot be found, the method should return 404 (Not Found).
+
+If the request was fulfilled but there is no response body included in the HTTP response, then it should return HTTP status code 204 (No Content); for example, a search operation yielding no matches might be implemented with this behavior.
+
+#### POST methods
+If a POST method creates a new resource, it returns HTTP status code 201 (Created). The URI of the new resource is included in the Location header of the response. The response body contains a representation of the resource.
+
+If the method does some processing but does not create a new resource, the method can return HTTP status code 200 and include the result of the operation in the response body. Alternatively, if there is no result to return, the method can return HTTP status code 204 (No Content) with no response body.
+
+If the client puts invalid data into the request, the server should return HTTP status code 400 (Bad Request). The response body can contain additional information about the error or a link to a URI that provides more details.
+
+#### PUT methods
+If a PUT method creates a new resource, it returns HTTP status code 201 (Created), as with a POST method. If the method updates an existing resource, it returns either 200 (OK) or 204 (No Content). In some cases, it might not be possible to update an existing resource. In that case, consider returning HTTP status code 409 (Conflict).
+
+Consider implementing bulk HTTP PUT operations that can batch updates to multiple resources in a collection. The PUT request should specify the URI of the collection, and the request body should specify the details of the resources to be modified. This approach can help to reduce chattiness and improve performance.
+
+#### PATCH methods
+With a PATCH request, the client sends a set of updates to an existing resource, in the form of a patch document. The server processes the patch document to perform the update. The patch document doesn't describe the whole resource, only a set of changes to apply. The specification for the PATCH method (RFC 5789) doesn't define a particular format for patch documents. The format must be inferred from the media type in the request.
+
+JSON is probably the most common data format for web APIs. There are two main JSON-based patch formats, called JSON patch and JSON merge patch.
+
+JSON merge patch is somewhat simpler. The patch document has the same structure as the original JSON resource, but includes just the subset of fields that should be changed or added. In addition, a field can be deleted by specifying null for the field value in the patch document. (That means merge patch is not suitable if the original resource can have explicit null values.)
+
+For example, suppose the original resource has the following JSON representation:
+
+```json
+{
+    "name":"gizmo",
+    "category":"widgets",
+    "color":"blue",
+    "price":10
+}
+```
+Here is a possible JSON merge patch for this resource:
+
+```json
+{
+    "price":12,
+    "color":null,
+    "size":"small"
+}
+```
+This tells the server to update price, delete color, and add size, while name and category are not modified. For the exact details of JSON merge patch, see RFC 7396. The media type for JSON merge patch is application/merge-patch+json.
+
+Here are some typical error conditions that might be encountered when processing a PATCH request, along with the appropriate HTTP status code.
+
+<table aria-label="Table 2" class="table table-sm">
+<thead>
+<tr>
+<th>Error condition</th>
+<th>HTTP status code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The patch document format isn't supported.</td>
+<td>415 (Unsupported Media Type)</td>
+</tr>
+<tr>
+<td>Malformed patch document.</td>
+<td>400 (Bad Request)</td>
+</tr>
+<tr>
+<td>The patch document is valid, but the changes can't be applied to the resource in its current state.</td>
+<td>409 (Conflict)</td>
+</tr>
+</tbody>
+</table>
+
+#### DELETE methods
+If the delete operation is successful, the web server should respond with HTTP status code 204 (No Content), indicating that the process has been successfully handled, but that the response body contains no further information. If the resource doesn't exist, the web server can return HTTP 404 (Not Found).
+
+#### Asynchronous operations
+Sometimes a POST, PUT, PATCH, or DELETE operation might require processing that takes a while to complete. If you wait for completion before sending a response to the client, it may cause unacceptable latency. If so, consider making the operation asynchronous. Return HTTP status code 202 (Accepted) to indicate the request was accepted for processing but is not completed.
+
+You should expose an endpoint that returns the status of an asynchronous request, so the client can monitor the status by polling the status endpoint.
+
+#### Filter and paginate data
+Exposing a collection of resources through a single URI can lead to applications fetching large amounts of data when only a subset of the information is required. For example, suppose a client application needs to find all orders with a cost over a specific value. It might retrieve all orders from the /orders URI and then filter these orders on the client side. Clearly this process is highly inefficient. It wastes network bandwidth and processing power on the server hosting the web API.
+
+Instead, the API can allow passing a filter in the query string of the URI, such as /orders?minCost=n. The web API is then responsible for parsing and handling the minCost parameter in the query string and returning the filtered results on the server side.
+
+GET requests over collection resources can potentially return a large number of items. You should design a web API to limit the amount of data returned by any single request. Consider supporting query strings that specify the maximum number of items to retrieve and a starting offset into the collection. For example:
+
+`/orders?limit=25&offset=50`
+
+Also consider imposing an upper limit on the number of items returned, to help prevent Denial of Service attacks. To assist client applications, GET requests that return paginated data should also include some form of metadata that indicate the total number of resources available in the collection.
+
+You can use a similar strategy to sort data as it is fetched, by providing a sort parameter that takes a field name as the value, such as /orders?sort=ProductID. However, this approach can have a negative effect on caching, because query string parameters form part of the resource identifier used by many cache implementations as the key to cached data.
+
+You can extend this approach to limit the fields returned for each item, if each item contains a large amount of data. For example, you could use a query string parameter that accepts a comma-delimited list of fields, such as /orders?fields=ProductID,Quantity.
+
+Give all optional parameters in query strings meaningful defaults. For example, set the limit parameter to 10 and the offset parameter to 0 if you implement pagination, set the sort parameter to the key of the resource if you implement ordering, and set the fields parameter to all fields in the resource if you support projections.
+
+
+### [Fluent API - Configuring and Mapping Properties and Types](https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/fluent/types-and-properties)
+
+#### Property Mapping
+The Property method is used to configure attributes for each property belonging to an entity or complex type. The Property method is used to obtain a configuration object for a given property. The options on the configuration object are specific to the type being configured; IsUnicode is available only on string properties for example.
+
+To explicitly set a property to be a primary key, you can use the HasKey method. In the following example, the HasKey method is used to configure the InstructorID primary key on the OfficeAssignment type.
+
+```csharp
+modelBuilder.Entity<OfficeAssignment>().HasKey(t => t.InstructorID);
+```
+* **Switching off Identity for Numeric Primary Keys**
+
+The following example sets the DepartmentID property to System.ComponentModel.DataAnnotations.DatabaseGeneratedOption.None to indicate that the value will not be generated by the database.
+
+```csharp
+modelBuilder.Entity<Department>().Property(t => t.DepartmentID)
+    .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
+```
+
+* **Specifying the Maximum Length on a Property**
+
+In the following example, the Name property should be no longer than 50 characters. If you make the value longer than 50 characters, you will get a DbEntityValidationException exception. If Code First creates a database from this model it will also set the maximum length of the Name column to 50 characters.
+
+```csharp
+modelBuilder.Entity<Department>().Property(t => t.Name).HasMaxLength(50);
+```
+* **Mapping an Entity Type to a Specific Table in the Database**
+
+All properties of Department will be mapped to columns in a table called t_ Department.
+
+```csharp
+modelBuilder.Entity<Department>()  
+    .ToTable("t_Department");
+```
 
 ## 8. Background service
 
