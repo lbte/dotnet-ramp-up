@@ -1434,6 +1434,10 @@ dotnet ef database update InitialMigration --project PRFTLatam.EmploymentInfo.Do
 
 ```
 
+In the end this is how the API ends up looking in swagger:
+
+<img src="media\employmentinfo-api.png" width=700px />
+
 ### Material
 * [RESTful web API design](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design)
 * [Get started with Swashbuckle and ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-6.0&tabs=visual-studio)
