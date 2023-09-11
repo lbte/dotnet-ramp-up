@@ -1401,6 +1401,39 @@ dotnet add PRFTLatam.EmploymentInfo.Infrastructure/ reference PRFTLatam.Employme
 dotnet add PRFTLatam.EmploymentInfo.Infrastructure/ reference PRFTLatam.EmploymentInfo.Domain/
 ```
 
+#### Migrations
+
+In order to create the migrations use the following command:
+
+```shell
+dotnet ef migrations add InitialMigration --project PRFTLatam.EmploymentInfo.Domain -s PRFTLatam.EmploymentInfo.Infrastructure -c EmploymentInfoContext --verbose
+```
+
+This is the structure of the command:
+
+````shell
+dotnet ef migrations add InitDatabase --project YourDataAccessLibraryName -s YourWebProjectName -c YourDbContextClassName --verbose 
+````
+
+
+https://stackoverflow.com/questions/59796411/unable-to-create-an-object-of-type-applicationdbcontext-for-the-different-pat
+
+The `--verbose` flag is to see all the process it does to perform the migration
+
+* To remove the most recent migration use:
+
+```shell
+dotnet ef migrations remove --project PRFTLatam.EmploymentInfo.Domain -s PRFTLatam.EmploymentInfo.Infrastructure -c EmploymentInfoContext --verbose
+```
+
+And then use the following command to update the database:
+
+
+```shell
+dotnet ef database update InitialMigration --project PRFTLatam.EmploymentInfo.Domain -s PRFTLatam.EmploymentInfo.Infrastructure -c EmploymentInfoContext --verbose
+
+```
+
 ### Material
 * [RESTful web API design](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design)
 * [Get started with Swashbuckle and ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-6.0&tabs=visual-studio)

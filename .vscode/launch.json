@@ -2,10 +2,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": ".NET Core Launch (web) EmploymentInfo",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PRFTLatam.EmploymentInfo/PRFTLatam.EmploymentInfo.Infrastructure/bin/Debug/net6.0/PRFTLatam.EmploymentInfo.Infrastructure.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/PRFTLatam.EmploymentInfo/PRFTLatam.EmploymentInfo.Infrastructure",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        
+        {
             // Use IntelliSense to find out which attributes exist for C# debugging
             // Use hover for the description of the existing attributes
             // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
-            "name": ".NET Core Launch (web)",
+            "name": ".NET Core Launch (web) OrdersData",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",

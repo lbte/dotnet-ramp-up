@@ -26,6 +26,30 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/PRFTLatam.OrdersData/PRFTLatam.OrdersData.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/PRFTLatam.EmploymentInfo/PRFTLatam.EmploymentInfo.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "watch",
             "command": "dotnet",
             "type": "process",
@@ -33,7 +57,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/PRFTLatam.OrdersData/PRFTLatam.OrdersData.sln"
+                "${workspaceFolder}/PRFTLatam.EmploymentInfo/PRFTLatam.EmploymentInfo.sln"
             ],
             "problemMatcher": "$msCompile"
         }
