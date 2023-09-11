@@ -10,8 +10,8 @@ public interface IDeveloperService
     Task <IEnumerable<Developer>> GetDevelopersByAge(int age);
     Task <IEnumerable<Developer>> GetDevelopersByWorkedHours(int workedHours);
     Task <Developer> GetDeveloperByEmail(string email);
-    Task <Developer> CreateDeveloper(Developer developer);
-    Task <Developer> UpdateDeveloper(Developer developer);
+    Task <List<string>> CreateDeveloper(Developer developer);
+    Task <List<string>> UpdateDeveloper(Developer developer);
     Task <string> DeleteDeveloper(string email);
 
 

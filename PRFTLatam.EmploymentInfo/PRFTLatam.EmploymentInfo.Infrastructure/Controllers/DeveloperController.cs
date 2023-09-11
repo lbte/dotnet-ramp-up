@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using PRFTLatam.EmploymentInfo.Application.Services;
 using PRFTLatam.EmploymentInfo.Domain.Models;
 
@@ -41,7 +42,7 @@ public class DeveloperController : ControllerBase
     /// <response code="200">Returns the list of developers with that first name</response>
     /// <response code="404">If there are no developers found with that first name</response>
     [HttpGet]
-    [Route("{firstName}")]
+    [Route("GetDevelopersByFirstName/{firstName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDevelopersByFirstName(string firstName)
@@ -58,7 +59,7 @@ public class DeveloperController : ControllerBase
     /// <response code="200">Returns the list of developers with that last name</response>
     /// <response code="404">If there are no developers found with that last name</response>
     [HttpGet]
-    [Route("{lastName}")]
+    [Route("GetDevelopersByLastName/{lastName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDevelopersByLastName(string lastName)
@@ -75,7 +76,7 @@ public class DeveloperController : ControllerBase
     /// <response code="200">Returns the list of developers with that age</response>
     /// <response code="404">If there are no developers found with that age</response>
     [HttpGet]
-    [Route("{age}")]
+    [Route("GetDevelopersByAge/{age}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDevelopersByAge(int age)
@@ -92,7 +93,7 @@ public class DeveloperController : ControllerBase
     /// <response code="200">Returns the list of developers with that number of worked hours</response>
     /// <response code="404">If there are no developers found with that number of worked hours</response>
     [HttpGet]
-    [Route("{workedHours}")]
+    [Route("GetDevelopersByWorkedHours/{workedHours}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDevelopersByWorkedHours(int workedHours)
@@ -109,7 +110,7 @@ public class DeveloperController : ControllerBase
     /// <response code="200">Returns the developer with that email address</response>
     /// <response code="404">If there are no developers found with that email address</response>
     [HttpGet]
-    [Route("{email}")]
+    [Route("GetDeveloperByEmail/{email}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDeveloperByEmail(string email)
@@ -131,7 +132,7 @@ public class DeveloperController : ControllerBase
     public async Task<IActionResult> CreateDeveloper([FromBody] Developer developer) 
     {
         var newDeveloper = await _developerService.CreateDeveloper(developer);
-        return newDeveloper != null ? CreatedAtAction(nameof(CreateDeveloper), newDeveloper) : StatusCode(StatusCodes.Status400BadRequest, $"The developer could not be created");
+        return newDeveloper[0].Contains("FirstName") ? CreatedAtAction(nameof(CreateDeveloper), JsonConvert.DeserializeObject<Developer>(newDeveloper[0])) : StatusCode(StatusCodes.Status400BadRequest, $"The developer could not be created due to:{string.Join("\n", newDeveloper)}");
     }
 
     /// <summary>
@@ -147,7 +148,7 @@ public class DeveloperController : ControllerBase
     public async Task<IActionResult> UpdateDeveloper([FromBody] Developer developer) 
     {
         var updatedDeveloper = await _developerService.UpdateDeveloper(developer);
-        return updatedDeveloper != null ? Ok(updatedDeveloper) : StatusCode(StatusCodes.Status400BadRequest, $"The developer could not be created");
+        return updatedDeveloper[0].Contains("FirstName") ? Ok(JsonConvert.DeserializeObject<Developer>(updatedDeveloper[0])) : StatusCode(StatusCodes.Status400BadRequest, $"The developer could not be created due to:{string.Join("\n", updatedDeveloper)}");
     }
 
     /// <summary>
