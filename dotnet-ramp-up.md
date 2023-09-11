@@ -1320,6 +1320,347 @@ And then when getting the clients that are in the DB it shows the following:
 
 # Code challenges
 
+## 6. Developer Todo
+
+Create a console app that will receive as a parameter the developer user email e.g. Sincere@april.biz. Based on the entered user email get the user personal information and the user ToDos list by calling following services.
+
+* https://jsonplaceholder.typicode.com/users
+* https://jsonplaceholder.typicode.com/todos
+
+Once you have all the user information (Personal and ToDos) it is necessary to write the result info in a json file in the following format.
+
+```json
+{
+   "id":1,
+   "name":"Leanne Graham",
+   "username":"Bret",
+   "email":"Sincere@april.biz",
+   "address":{
+      "street":"Kulas Light",
+      "suite":"Apt. 556",
+      "city":"Gwenborough",
+      "zipcode":"92998-3874",
+      "geo":{
+         "lat":"-37.3159",
+         "lng":"81.1496"
+      }
+   },
+   "phone":"1-770-736-8031 x56442",
+   "website":"hildegard.org",
+   "todos":[
+      {
+         "userId":1,
+         "id":1,
+         "title":"delectus aut autem",
+         "completed":false
+      }
+   ]
+}
+```
+
+### Implementation
+
+### Create console app
+
+Use the following commands to do so:
+
+```shell
+mkdir PRFTLatam.DeveloperTodoClient
+cd .\PRFTLatam.DeveloperTodoClient\
+dotnet new console
+dotnet add package Microsoft.AspNet.WebApi.Client --version 5.2.9 
+dotnet add package Newtonsoft.Json --version 13.0.3
+```
+
+### Material
+* [​​​​​​​Calling a web api from a client](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/calling-a-web-api-from-a-net-client)
+* [Are you using HttpClient in the right way?](https://www.rahulpnath.com/blog/are-you-using-httpclient-in-the-right-way/)
+* [Using HttpClientFactory](https://code-maze.com/using-httpclientfactory-in-asp-net-core-applications/)
+
+### [​​​​​​​Calling a web api from a client](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/calling-a-web-api-from-a-net-client)
+
+This tutorial shows how to call a web API from a .NET application, using System.Net.Http.HttpClient.
+
+In this tutorial, a client app is written that consumes the following web API:
+
+<table aria-label="Table 1" class="table table-sm">
+<thead>
+<tr>
+<th>Action</th>
+<th>HTTP method</th>
+<th>Relative URI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Get a product by ID</td>
+<td>GET</td>
+<td>/api/products/<em>id</em></td>
+</tr>
+<tr>
+<td>Create a new product</td>
+<td>POST</td>
+<td>/api/products</td>
+</tr>
+<tr>
+<td>Update a product</td>
+<td>PUT</td>
+<td>/api/products/<em>id</em></td>
+</tr>
+<tr>
+<td>Delete a product</td>
+<td>DELETE</td>
+<td>/api/products/<em>id</em></td>
+</tr>
+</tbody>
+</table>
+
+For simplicity, the client application in this tutorial is a Windows console application.
+
+NOTE: If you pass base URLs and relative URIs as hard-coded values, be mindful of the rules for utilizing the HttpClient API. The HttpClient.BaseAddress property should be set to an address with a trailing forward slash (/). For example, when passing hard-coded resource URIs to the HttpClient.GetAsync method, don't include a leading forward slash. To get a Product by ID:
+
+* Set `client.BaseAddress = new Uri("https://localhost:5001/");`
+* Request a Product. For example, `client.GetAsync<Product>("api/products/4");`.
+
+#### Create the Console Application
+In Visual Studio, create a new Windows console app named HttpClientSample and paste in the following code:
+
+```csharp
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+
+namespace HttpClientSample
+{
+    public class Product
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public string Category { get; set; }
+    }
+
+    class Program
+    {
+        static HttpClient client = new HttpClient();
+
+        static void ShowProduct(Product product)
+        {
+            Console.WriteLine($"Name: {product.Name}\tPrice: " +
+                $"{product.Price}\tCategory: {product.Category}");
+        }
+
+        static async Task<Uri> CreateProductAsync(Product product)
+        {
+            HttpResponseMessage response = await client.PostAsJsonAsync(
+                "api/products", product);
+            response.EnsureSuccessStatusCode();
+
+            // return URI of the created resource.
+            return response.Headers.Location;
+        }
+
+        static async Task<Product> GetProductAsync(string path)
+        {
+            Product product = null;
+            HttpResponseMessage response = await client.GetAsync(path);
+            if (response.IsSuccessStatusCode)
+            {
+                product = await response.Content.ReadAsAsync<Product>();
+            }
+            return product;
+        }
+
+        static async Task<Product> UpdateProductAsync(Product product)
+        {
+            HttpResponseMessage response = await client.PutAsJsonAsync(
+                $"api/products/{product.Id}", product);
+            response.EnsureSuccessStatusCode();
+
+            // Deserialize the updated product from the response body.
+            product = await response.Content.ReadAsAsync<Product>();
+            return product;
+        }
+
+        static async Task<HttpStatusCode> DeleteProductAsync(string id)
+        {
+            HttpResponseMessage response = await client.DeleteAsync(
+                $"api/products/{id}");
+            return response.StatusCode;
+        }
+
+        static void Main()
+        {
+            RunAsync().GetAwaiter().GetResult();
+        }
+
+        static async Task RunAsync()
+        {
+            // Update port # in the following line.
+            client.BaseAddress = new Uri("http://localhost:64195/");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            try
+            {
+                // Create a new product
+                Product product = new Product
+                {
+                    Name = "Gizmo",
+                    Price = 100,
+                    Category = "Widgets"
+                };
+
+                var url = await CreateProductAsync(product);
+                Console.WriteLine($"Created at {url}");
+
+                // Get the product
+                product = await GetProductAsync(url.PathAndQuery);
+                ShowProduct(product);
+
+                // Update the product
+                Console.WriteLine("Updating price...");
+                product.Price = 80;
+                await UpdateProductAsync(product);
+
+                // Get the updated product
+                product = await GetProductAsync(url.PathAndQuery);
+                ShowProduct(product);
+
+                // Delete the product
+                var statusCode = await DeleteProductAsync(product.Id);
+                Console.WriteLine($"Deleted (HTTP Status = {(int)statusCode})");
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            Console.ReadLine();
+        }
+    }
+}
+```
+
+The preceding code is the complete client app.
+
+* `RunAsync` runs and blocks until it completes. Most HttpClient methods are async, because they perform network I/O. All of the async tasks are done inside RunAsync. Normally an app doesn't block the main thread, but this app doesn't allow any interaction.
+
+* The `Product class` matches the data model used by the web API. An app can use HttpClient to read a Product instance from an HTTP response. The app doesn't have to write any deserialization code.
+
+* The `Program class`:
+    * Create and Initialize HttpClient: The static HttpClient property is intended to be instantiated once and reused throughout the life of an application. The following conditions can result in SocketException errors: Creating a new HttpClient instance per request, Server under heavy load. Creating a new HttpClient instance per request can exhaust the available sockets.
+
+    * The following code initializes the HttpClient instance:
+        ```csharp
+        static async Task RunAsync()
+        {
+            // Update port # in the following line.
+            client.BaseAddress = new Uri("http://localhost:64195/");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        ```
+        The preceding code:
+
+        - Sets the base URI for HTTP requests. Change the port number to the port used in the server app. The app won't work unless port for the server app is used.
+        - Sets the Accept header to "application/json". Setting this header tells the server to send data in JSON format.
+
+    * **Send a GET request to retrieve a resource:** The following code sends a GET request for a product:
+        ```csharp
+        static async Task<Product> GetProductAsync(string path)
+        {
+            Product product = null;
+            HttpResponseMessage response = await client.GetAsync(path);
+            if (response.IsSuccessStatusCode)
+            {
+                product = await response.Content.ReadAsAsync<Product>();
+            }
+            return product;
+        }
+        ```
+        The `GetAsync` method sends the HTTP GET request. When the method completes, it returns an `HttpResponseMessage` that contains the HTTP response. If the status code in the response is a success code, the response body contains the JSON representation of a product. Call `ReadAsAsync` to deserialize the JSON payload to a Product instance. The ReadAsAsync method is asynchronous because the response body can be arbitrarily large.
+
+        HttpClient does not throw an exception when the HTTP response contains an error code. Instead, the IsSuccessStatusCode property is false if the status is an error code.   
+
+    * **Sending a POST Request to Create a Resource:** The following code sends a POST request that contains a Product instance in JSON format: 
+
+        ```csharp
+        static async Task<Uri> CreateProductAsync(Product product)
+        {
+            HttpResponseMessage response = await client.PostAsJsonAsync(
+                "api/products", product);
+            response.EnsureSuccessStatusCode();
+
+            // return URI of the created resource.
+            return response.Headers.Location;
+        }
+        ```
+
+        The `PostAsJsonAsync` method:
+
+        * Serializes an object to JSON.
+        * Sends the JSON payload in a POST request.
+        
+        If the request succeeds:
+
+        * It should return a 201 (Created) response.
+        * The response should include the URL of the created resources in the Location header.
+
+    * **Sending a PUT Request to Update a Resource:** The following code sends a PUT request to update a product:
+        ```csharp
+        static async Task<Product> UpdateProductAsync(Product product)
+        {
+            HttpResponseMessage response = await client.PutAsJsonAsync(
+                $"api/products/{product.Id}", product);
+            response.EnsureSuccessStatusCode();
+
+            // Deserialize the updated product from the response body.
+            product = await response.Content.ReadAsAsync<Product>();
+            return product;
+        }
+        ```
+
+        The `PutAsJsonAsync` method works like PostAsJsonAsync, except that it sends a PUT request instead of POST.
+
+    * **Sending a DELETE Request to Delete a Resource:** The following code sends a DELETE request to delete a product:
+        ```csharp
+        static async Task<HttpStatusCode> DeleteProductAsync(string id)
+        {
+            HttpResponseMessage response = await client.DeleteAsync(
+                $"api/products/{id}");
+            return response.StatusCode;
+        }
+        ```
+
+        Like GET, a DELETE request does not have a request body. You don't need to specify JSON or XML format with DELETE.
+
+#### Install the Web API Client Libraries
+
+Use NuGet Package Manager to install the Web API Client Libraries package. https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client
+
+```shell
+dotnet add package Microsoft.AspNet.WebApi.Client --version 5.2.9
+```
+
+The preceding command adds the following NuGet packages to the project:
+
+* Microsoft.AspNet.WebApi.Client
+* Newtonsoft.Json
+
+Newtonsoft.Json (also known as Json.NET) is a popular high-performance JSON framework for .NET.
+
+### [Are you using HttpClient in the right way?](https://www.rahulpnath.com/blog/are-you-using-httpclient-in-the-right-way/)
+
+When using ASP.NET to build an application, HTTP requests is made using an instance of the HttpClient class. An HttpClient class acts as a session to send HTTP Requests. It is a collection of settings applied to all requests executed by that instance.
+
+
+
+
 ## 7. Web API
 
 ### Exercise 
@@ -1621,6 +1962,7 @@ modelBuilder.Entity<Department>()
 
 ## 8. Background service
 
+### Exercise
 Create a console app that runs a background process to print the current time of the following cities each 30 seconds.
 
 <table class="bandedRowColumnTableStyleTheme cke_show_border"><tbody><tr><td role="columnheader" style="text-align:center;">City</td><td role="columnheader" style="text-align:center;">TimeZone</td></tr><tr><td role="rowheader">Bogota</td><td>America/Bogota</td></tr><tr><td role="rowheader">Chicago</td><td>America/Chicago</td></tr><tr><td role="rowheader">Argentina</td><td>America/Argentina/Buenos_Aires</td></tr><tr><td role="rowheader">Detroit</td><td>America/Detroit</td></tr><tr><td role="rowheader">London</td><td>Europe/London</td></tr></tbody></table>
