@@ -1320,6 +1320,65 @@ And then when getting the clients that are in the DB it shows the following:
 
 # Code challenges
 
+## 5. Developer Salary Calculator
+
+### Exercise
+
+Create a console app that reads a csv file that contains the information of a groups of developers classified by type. A developer might be classified in one of the following types:
+
+* Junior
+* Intermediate
+* Senior
+* Lead
+
+Once you read the csv file it will be required to map each row in a defined type and then print all the information in the console in the following way.
+
+Dev Name: John Doe
+Dev Type: Junior
+Worked Hours: 40
+SalaryByHour: 120 USD
+
+#### Increase Requirement 1
+​​​​​
+Instead of reading the data from a csv file you should read it from a simple table configure in a database​​​​​​​.
+
+#### Increase Requirement 2
+​​​​
+Once you have all the developer data read done. You should create a method that calculates the salary of a list of developers and print the data in the console.
+
+```csharp
+// Salary Rules
+BaseRule => Hours*SalaryByHour 
+Junior => BaseRule 
+Intermediate => BaseRule * 1.12 
+Senior => BaseRule * 1.25 
+Lead => BaseRule * 1.5 
+​
+//Format to print the data: 
+Dev Name: John Doe 
+Dev Type: Junior 
+Worked Hours: 40 
+SalaryByHour: 120 USD
+​
+Resume: 
+Total Salary: 1500 USD 
+Total Hours: 90 
+Total Devs: 4
+```
+
+#### Skills to evaluate
+​​​​​​
+* File stream operations
+* Model definition
+* Value types (float, integers, string)
+* Single Responsibility
+* Polymorphism
+* [Strategy Pattern](https://www.geeksforgeeks.org/strategy-pattern-set-1/)
+
+### Implementation
+
+Generate the data: https://generatedata.com/generator
+
 ## 6. Developer Todo
 
 Create a console app that will receive as a parameter the developer user email e.g. Sincere@april.biz. Based on the entered user email get the user personal information and the user ToDos list by calling following services.
@@ -1370,6 +1429,194 @@ cd .\PRFTLatam.DeveloperTodoClient\
 dotnet new console
 dotnet add package Microsoft.AspNet.WebApi.Client --version 5.2.9 
 dotnet add package Newtonsoft.Json --version 13.0.3
+```
+
+### Create the code in the Program.cs
+
+```csharp
+using Newtonsoft.Json.Linq;
+using System.Net.Http;
+
+namespace PRFTLatam.DeveloperTodoClient;
+
+class Program
+{
+    static HttpClient client = new HttpClient();
+
+    static void Main()
+    {
+        RunAsync().GetAwaiter().GetResult();
+    }
+
+    static async Task<JToken> GetDeveloperTodos(string email)
+    {
+        string userResponse = await client.GetStringAsync($"https://jsonplaceholder.typicode.com/users/?email={email}");
+        JArray userArray = JArray.Parse(userResponse);
+        JToken user = userArray[0];
+
+        string userTodosResponse = await client.GetStringAsync($"https://jsonplaceholder.typicode.com/todos/?userId={user["id"]}");
+        JArray userTodosArray = JArray.Parse(userTodosResponse);
+
+        user["company"].Parent.Remove();
+        
+        user["todos"] = userTodosArray;
+
+        return user;
+    }
+
+    static async Task RunAsync()
+    {
+        // var user = await GetDeveloperTodos("Sincere@april.biz");
+        var user = await GetDeveloperTodos("Shanna@melissa.tv");
+        Console.WriteLine(user);
+        File.WriteAllText(@"C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\PRFTLatam.DeveloperTodoClient\user.json", user.ToString());
+    }
+}
+```
+
+Output:
+
+```json
+{
+  "id": 2,
+  "name": "Ervin Howell",
+  "username": "Antonette",
+  "email": "Shanna@melissa.tv",
+  "address": {
+    "street": "Victor Plains",
+    "suite": "Suite 879",
+    "city": "Wisokyburgh",
+    "zipcode": "90566-7771",
+    "geo": {
+      "lat": "-43.9509",
+      "lng": "-34.4618"
+    }
+  },
+  "phone": "010-692-6593 x09125",
+  "website": "anastasia.net",
+  "todos": [
+    {
+      "userId": 2,
+      "id": 21,
+      "title": "suscipit repellat esse quibusdam voluptatem incidunt",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 22,
+      "title": "distinctio vitae autem nihil ut molestias quo",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 23,
+      "title": "et itaque necessitatibus maxime molestiae qui quas velit",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 24,
+      "title": "adipisci non ad dicta qui amet quaerat doloribus ea",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 25,
+      "title": "voluptas quo tenetur perspiciatis explicabo natus",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 26,
+      "title": "aliquam aut quasi",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 27,
+      "title": "veritatis pariatur delectus",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 28,
+      "title": "nesciunt totam sit blanditiis sit",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 29,
+      "title": "laborum aut in quam",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 30,
+      "title": "nemo perspiciatis repellat ut dolor libero commodi blanditiis omnis",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 31,
+      "title": "repudiandae totam in est sint facere fuga",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 32,
+      "title": "earum doloribus ea doloremque quis",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 33,
+      "title": "sint sit aut vero",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 34,
+      "title": "porro aut necessitatibus eaque distinctio",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 35,
+      "title": "repellendus veritatis molestias dicta incidunt",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 36,
+      "title": "excepturi deleniti adipisci voluptatem et neque optio illum ad",
+      "completed": true
+    },
+    {
+      "userId": 2,
+      "id": 37,
+      "title": "sunt cum tempora",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 38,
+      "title": "totam quia non",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 39,
+      "title": "doloremque quibusdam asperiores libero corrupti illum qui omnis",
+      "completed": false
+    },
+    {
+      "userId": 2,
+      "id": 40,
+      "title": "totam atque quo nesciunt",
+      "completed": true
+    }
+  ]
+}
 ```
 
 ### Material
