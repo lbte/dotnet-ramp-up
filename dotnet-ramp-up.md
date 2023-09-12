@@ -1320,6 +1320,91 @@ And then when getting the clients that are in the DB it shows the following:
 
 # Code challenges
 
+## 3. String operations
+
+### Exercise 
+​​​​​
+Write a method that receive 4 names and concatenate it to print a full name with the following structure.
+
+```
+"Hello Tonny Anderson Stark Rogers"
+```
+
+Just to see how the different ways to concatenate strings work in C# create a method for each of the approaches mentioned on the official [doc](https://docs.microsoft.com/en-us/dotnet/csharp/how-to/concatenate-multiple-strings).
+
+The idea here is to evaluate the performance of those separate methods by using [benchmark](https://benchmarkdotnet.org/articles/overview.html).
+
+### Implementation
+
+Install the package
+```shell
+dotnet add package BenchmarkDotNet --version 0.13.8
+```
+
+Create a new console application, write a class with methods that you want to measure, and mark them with the Benchmark attribute: `[Benchmark]`
+
+The BenchmarkRunner.Run<Md5VsSha256>() call runs your benchmarks and prints results to the console.
+
+Note that BenchmarkDotNet will only run benchmarks if the application is built in the Release configuration. This is to prevent unoptimized code from being benchmarked. BenchmarkDotNet will issue an error if you forget to change the configuration.
+
+### [How to benchmark C# code using BenchmarkDotNet](https://www.infoworld.com/article/3573782/how-to-benchmark-csharp-code-using-benchmarkdotnet.html)
+
+When benchmarking you should always ensure that you run your project in release mode. The reason is that during compilation the code is optimized differently for both debug and release modes. The C# compiler does a few optimizations in release mode that are not available in debug mode.
+
+Hence you should run your project in the release mode only. To run benchmarking, specify the following command at the Visual Studio command prompt.
+
+```shell
+dotnet run -p PRFTLatam.StringOperations.csproj -c Release
+```
+
+#### Analyze the benchmarking results
+Once the execution of the benchmarking process is complete, a summary of the results will be displayed at the console window. The summary section contains information related to the environment in which the benchmarks were executed, such as the BenchmarkDotNet version, operating system, computer hardware, .NET version, compiler information, and information related to the performance of the application.
+
+A few files will also be created in the BenchmarkDotNet.Artifacts folder under the application’s root folder. Here is a summary of the results. 
+
+```shell
+BenchmarkDotNet v0.13.8, Windows 10 (10.0.19045.3324/22H2/2022Update)
+11th Gen Intel Core i7-11800H 2.30GHz, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 6.0.413
+  [Host]     : .NET 6.0.21 (6.0.2123.36311), X64 RyuJIT AVX2
+  DefaultJob : .NET 6.0.21 (6.0.2123.36311), X64 RyuJIT AVX2
+
+
+| Method                         | Mean            | Error         | StdDev        | Gen0   | Allocated |
+|------------------------------- |----------------:|--------------:|--------------:|-------:|----------:|
+| ConcatenateNames               | 1,279,975.38 ns | 13,291.035 ns | 11,098.616 ns |      - |    1769 B |
+| ConcatenatePlusOperator        |        48.32 ns |      0.461 ns |      0.385 ns | 0.0140 |     176 B |
+| ConcatenatePlusEqualOperator   |        36.39 ns |      0.127 ns |      0.106 ns | 0.0216 |     272 B |
+| ConcatenateStringInterpolation |        39.97 ns |      0.807 ns |      0.897 ns | 0.0070 |      88 B |
+| ConcatenateStringFormat        |        90.34 ns |      1.033 ns |      0.967 ns | 0.0114 |     144 B |
+| ConcatenateStringBuilder       |        80.81 ns |      0.647 ns |      0.605 ns | 0.0331 |     416 B |
+| ConcatenateStringConcat        |        31.93 ns |      0.163 ns |      0.153 ns | 0.0114 |     144 B |
+| ConcatenateStringJoin          |        33.12 ns |      0.697 ns |      0.684 ns | 0.0121 |     152 B |
+| ConcatenateLINQ                |        93.70 ns |      0.826 ns |      0.732 ns | 0.0299 |     376 B |
+```
+
+Adding the Rank column attribute and running the benchmarking again. This will add an extra column to the output indicating which method was faster:
+
+```shell
+BenchmarkDotNet v0.13.8, Windows 10 (10.0.19045.3324/22H2/2022Update)
+11th Gen Intel Core i7-11800H 2.30GHz, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 6.0.413
+  [Host]     : .NET 6.0.21 (6.0.2123.36311), X64 RyuJIT AVX2
+  DefaultJob : .NET 6.0.21 (6.0.2123.36311), X64 RyuJIT AVX2
+
+
+| Method                         | Mean     | Error    | StdDev   | Rank | Gen0   | Allocated |
+|------------------------------- |---------:|---------:|---------:|-----:|-------:|----------:|
+| ConcatenatePlusOperator        | 47.58 ns | 0.504 ns | 0.447 ns |    4 | 0.0140 |     176 B |
+| ConcatenatePlusEqualOperator   | 37.23 ns | 0.351 ns | 0.293 ns |    2 | 0.0216 |     272 B |
+| ConcatenateStringInterpolation | 39.83 ns | 0.237 ns | 0.210 ns |    3 | 0.0070 |      88 B |
+| ConcatenateStringFormat        | 89.74 ns | 0.347 ns | 0.307 ns |    6 | 0.0114 |     144 B |
+| ConcatenateStringBuilder       | 79.56 ns | 0.378 ns | 0.354 ns |    5 | 0.0331 |     416 B |
+| ConcatenateStringConcat        | 31.51 ns | 0.068 ns | 0.061 ns |    1 | 0.0114 |     144 B |
+| ConcatenateStringJoin          | 31.81 ns | 0.348 ns | 0.326 ns |    1 | 0.0121 |     152 B |
+| ConcatenateLINQ                | 90.52 ns | 0.526 ns | 0.492 ns |    6 | 0.0299 |     376 B |
+```
+
 ## 4. Collections
 
 ### Exercise
@@ -1339,9 +1424,6 @@ Queue and Stack
 
 ### Material
 * [Collections (C#)](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/collections)
-
-### Implementation
-
 
 
 ## 5. Developer Salary Calculator
