@@ -4235,3 +4235,100 @@ Aprender que algo se aprenda bien, bases conceptuales claras
 5. Añadí referencias de API con Infrastructure y Services, para poder hacer la inyección de dependecias con el UnitOfWork. Además los modelos los hice en Infrastructura en lugar de Services
 
 6. Para esto `GET api/v1/getAllCustomersWithNoOrder Returns all customers who have never had an order.`, como en client no hay una asociación directa con orders sino que la clave foránea la tiene order para con los clientes, ¿cómo puedo obtener esos clientes? ¿haciendo un join de las dos tablas y mirar qué clientes no están en la tabla de orders? 
+
+
+# Curso: Pruebas unitarias con xUnit en .NET
+
+## Creación del proyecto
+
+```shell
+mkdir UnitTests.TextManager
+cd .\UnitTests.TextManager\
+mkdit TextManager
+cd .\TextManager\
+dotnet new classlib
+
+cd ..
+mkdir TextManager.Tests
+cd .\TextManager.Tests\
+dotnet new xunit
+```
+
+Add references:
+
+```shell
+dotnet add TextManager.Tests/ reference TextManager/
+```
+
+### [XUnit docs](https://xunit.net/docs/comparisons)
+
+### Test Setup
+
+Para configurar un método inicial que se va a ejecutar antes de cualquier prueba dentro de una clase de pruebas, se debe usar el constructor de la clase
+
+Si se usa una misma variable en varios tests, la inicialización de la misma se puede hacer en el constructor, y así no habría tanta repetición
+
+* El atributo `[Theory]` permite modificar parámetros (es mejor que sea para una poca cantidad de parámetros)
+
+    <img src="media/xunit-inline-data-tests.png" width=700px />
+
+* Pero se puede usar algo llamado `ClassData` que permite inicializar una mayor cantidad de parámetros más facilmente
+
+    ```csharp
+    using System.Collections;
+
+    namespace TextManager.Tests;
+
+    public class TextManagerClassData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] {"", 0};
+            yield return new object[] {"Hola mundo", 2};
+            yield return new object[] {"Saludos a todos desde el curso de xunit", 8};
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator(); // reasignar el método con el que se acabó de crear
+    }
+    ```
+
+    * Se puede llegar a necesitar que se salten algunas pruebas porque ya no se necesitan o porque se deben terminar luego, para eso se usa el parámetro `Skip` en el atributo Fact:
+
+    Ejemplo:
+
+    ```csharp
+    [Fact(Skip="This test is not valid for the current code")]
+    public void FindExactWord()
+    {
+        // Arrange
+        // var textManager = new TextManager("Hola hola desde xunit");
+
+        // Act
+        var result = textManagerGlobal.FindExactWord("mundo", bolIgnoreUppercaseLowercase: true);
+
+        // Assert
+        Assert.IsType<List<Match>>(result); //must be of type List<Match>
+    }
+    ```
+
+    Y se puede ver que no se ejecutó así:
+
+    <img src="media/skip-test.png" />
+
+### Mocks
+
+El objetivo es reemplazar dependencias de un componente como un servicio o una clase, entonces se usan mocks que hacen creer al componente que usa el servicio que esta usando el real, entonces el mock devuelve un valor por defecto que se configura
+
+Como las pruebas deber ser independientes, no deberían tener una dependencia de configuración específica, por tanto no tiene sentido hacer una prueba sobre una bd por ejemplo, ya que el objetivo es probar la lógica del código y no lo que hacen los servicios externos
+
+https://nsubstitute.github.io/
+
+https://nsubstitute.github.io/help/getting-started/
+
+https://www.nuget.org/packages/NSubstitute#versions-body-tab
+
+Ponerla en el csproj:
+
+```xml
+<PackageReference Include="NSubstitute" Version="5.1.0" />
+```
