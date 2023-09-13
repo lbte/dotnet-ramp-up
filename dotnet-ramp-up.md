@@ -4332,3 +4332,16 @@ Ponerla en el csproj:
 ```xml
 <PackageReference Include="NSubstitute" Version="5.1.0" />
 ```
+
+Y el otro paquete:
+
+```shell
+dotnet add package NSubstitute.Analyzers.CSharp
+```
+
+* Para mirar las diferencias entre Moq y NSubstitute.
+https://dev.to/cloudx/moq-vs-nsubstitute-who-is-the-winner-40gi
+
+Con el objetivo de simular mejor el mockin por medio de inyección de dependencias: 
+
+* Instalar la librería en el Proyecto de TextManager: `<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />`

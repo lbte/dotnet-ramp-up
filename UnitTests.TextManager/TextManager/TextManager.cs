@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,10 +17,11 @@ public class TextManager
     /// Initializes a new instance of the <see cref="TextManager" /> class.
     /// </summary>
     /// <param name="strText">Text using for changes and caculate values</param>
-    public TextManager(string strText)
+    public TextManager(string strText, ILogger<TextManager> logger)
     {
         this.TextOriginal = strText;
         this.TextEdited = strText;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -31,12 +33,13 @@ public class TextManager
     /// Conect Text width changes in execution
     /// </summary>
     public string TextEdited { get; set; }
+    private ILogger<TextManager> logger { get; set; }
 
     /// <summary>
-    /// Count number words in orginal text
+    /// Count number words in orginal text (virtual so it can be overwritten for the mocks)
     /// </summary>
     /// <returns>int with counted words</returns>
-    public int CountWords()
+    public virtual int CountWords()
     {
         // var set number word and return calculate value
         int intCount = 0;
@@ -52,6 +55,9 @@ public class TextManager
                 intCount++;
             }
         }
+
+        // show info to the console
+        logger.LogInformation($"Count {intCount} for text {TextOriginal}");
 
         return intCount;
     }

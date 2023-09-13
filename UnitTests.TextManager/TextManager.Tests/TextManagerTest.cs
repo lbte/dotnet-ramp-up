@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using System.Text.RegularExpressions;
 using Xunit;
 
@@ -6,16 +8,18 @@ namespace TextManager.Tests;
 public class TextManagerTest
 {
     TextManager textManagerGlobal;
+    ILogger<TextManager> loggerTest;
     public TextManagerTest()
     {
-        textManagerGlobal = new TextManager("Hola hola desde xunit");
+        loggerTest = Substitute.For<ILogger<TextManager>>();
+        textManagerGlobal = new TextManager("Hola hola desde xunit", loggerTest);
     }
     
     [Fact]
     public void CountWords()
     {
         // Arrange
-        var textManager = new TextManager("Texto prueba");
+        var textManager = new TextManager("Texto prueba", loggerTest);
 
         // Act
         var result = textManager.CountWords();
@@ -32,7 +36,7 @@ public class TextManagerTest
     public void CountWords_Theory(string text, int expected)
     {
         // Arrange
-        var textManager = new TextManager(text);
+        var textManager = new TextManager(text, loggerTest);
 
         // Act
         var result = textManager.CountWords();
@@ -47,7 +51,7 @@ public class TextManagerTest
     public void CountWords_ClassData(string text, int expected)
     {
         // Arrange
-        var textManager = new TextManager(text);
+        var textManager = new TextManager(text, loggerTest);
 
         // Act
         var result = textManager.CountWords();
@@ -61,10 +65,24 @@ public class TextManagerTest
     public void CountWords_NotZero()
     {
         // Arrange
-        var textManager = new TextManager("Tex");
+        var textManager = new TextManager("Tex", loggerTest);
 
         // Act
         var result = textManager.CountWords();
+
+        // Assert
+        Assert.NotEqual(0, result);
+    }
+
+    [Fact]
+    public void CountWords_NotZero_NSubstitute()
+    {
+        // Arrange
+        var mock = Substitute.For<TextManager>("Texto", loggerTest);
+        mock.CountWords().Returns(1); // configuración para que siempre devuelva 1
+
+        // Act
+        var result = mock.CountWords();
 
         // Assert
         Assert.NotEqual(0, result);
