@@ -4345,3 +4345,205 @@ https://dev.to/cloudx/moq-vs-nsubstitute-who-is-the-winner-40gi
 Con el objetivo de simular mejor el mockin por medio de inyección de dependencias: 
 
 * Instalar la librería en el Proyecto de TextManager: `<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />`
+
+
+### Opciones para medir la cobertura de las pruebas
+
+Esto hace referencia a qué tanto código del proyecto que se está probando ha sido cubierto
+
+#### [Coverlet](https://github.com/coverlet-coverage/coverlet)
+
+Librería opensource que se puede usar para obtener la cobertura de código del proyecto
+Permite generar reportes y se puede configurar la forma en la que se hace la cobertura (como excluyendo alguna clase)
+
+Instalar la librería en Tests: 
+
+```shell
+dotnet add package coverlet.collector
+dotnet add package coverlet.msbuild
+```
+
+Correr el siguiente comando para obtener la cobertura:
+
+```shell
+dotnet test /p:CollectCoverage=true
+```
+
+After the above command is run, a coverage.json file containing the results will be generated in the root directory of the test project. A summary of the results will also be displayed in the terminal.
+
+Y el resultado obtenido es:
+
+```shell
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.59]     TextManager.Tests.TextManagerTest.FindExactWord [SKIP]
+  Skipped TextManager.Tests.TextManagerTest.FindExactWord [1 ms]
+
+Passed!  - Failed:     0, Passed:    12, Skipped:     1, Total:    13, Duration: 41 ms - TextManager.Tests.dll (net6.0)
+
+Calculating coverage result...
+  Generating report 'C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\UnitTests.TextManager\TextManager.Tests\coverage.json'
+
++-------------+--------+--------+--------+
+| Module      | Line   | Branch | Method |
++-------------+--------+--------+--------+
+| TextManager | 42.47% | 31.25% | 63.63% |
++-------------+--------+--------+--------+
+
++---------+--------+--------+--------+
+|         | Line   | Branch | Method |
++---------+--------+--------+--------+
+| Total   | 42.47% | 31.25% | 63.63% |
++---------+--------+--------+--------+
+| Average | 42.47% | 31.25% | 63.63% |
++---------+--------+--------+--------+
+```
+
+#### Configuración del reporte de cobertura
+
+* Con el comando:
+
+    ```shell
+    dotnet test --no-build /p:CollectCoverage=true
+    ```
+
+    Se evita que se compile nuevamente la aplicación y que se ejecute más rápido el comando que obtiene la cobertura
+
+* Parámetro **Include**:
+
+    Permite especificar que namespaces se quieren incluir dentro de las pruebas, para esto se debe crear un archivo en el TextManager que será una clase es un namespace diferente, que no hace nada:
+
+    ```csharp
+    namespace TextTest;
+
+    class ClassTest
+    {
+        public void Method1()
+        {
+
+        }
+
+        public void Method2()
+        {
+
+        }
+    }
+    ```
+    Y si se ejecuta el comando: `dotnet test /p:CollectCoverage=true`
+
+    Se evidencia un resultado donde los porcentajes son menores, lo que quiere decir que no se están cubriendo esos métodos que se acabaron de agregar.
+
+    ```shell
+    Starting test execution, please wait...
+    A total of 1 test files matched the specified pattern.
+    [xUnit.net 00:00:00.57]     TextManager.Tests.TextManagerTest.FindExactWord [SKIP]
+      Skipped TextManager.Tests.TextManagerTest.FindExactWord [1 ms]
+
+    Passed!  - Failed:     0, Passed:    12, Skipped:     1, Total:    13, Duration: 48 ms - TextManager.Tests.dll (net6.0)
+
+    Calculating coverage result...
+      Generating report 'C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\UnitTests.TextManager\TextManager.Tests\coverage.json'
+
+    +-------------+--------+--------+--------+
+    | Module      | Line   | Branch | Method |
+    +-------------+--------+--------+--------+
+    | TextManager | 41.02% | 31.25% | 53.84% |
+    +-------------+--------+--------+--------+
+
+    +---------+--------+--------+--------+
+    |         | Line   | Branch | Method |
+    +---------+--------+--------+--------+
+    | Total   | 41.02% | 31.25% | 53.84% |
+    +---------+--------+--------+--------+
+    | Average | 41.02% | 31.25% | 53.84% |
+    +---------+--------+--------+--------+
+    
+    ```
+
+    Por tanto si se quiere indicar que solo se quiere usar el namespace TextManager y no el namespace TextTest, se hace el comando:
+
+    ```shell
+    dotnet test /p:CollectCoverage=true /p:Include="[*]TextManager.*"
+    ```
+
+    Para incluir cualquier namespace que se llame así, y así se obtiene el mismo reporte inicial:
+
+    ```shell
+    Calculating coverage result...
+      Generating report 'C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\UnitTests.TextManager\TextManager.Tests\coverage.json'
+
+    +-------------+--------+--------+--------+
+    | Module      | Line   | Branch | Method |
+    +-------------+--------+--------+--------+
+    | TextManager | 42.47% | 31.25% | 63.63% |
+    +-------------+--------+--------+--------+
+
+    +---------+--------+--------+--------+
+    |         | Line   | Branch | Method |
+    +---------+--------+--------+--------+
+    | Total   | 42.47% | 31.25% | 63.63% |
+    +---------+--------+--------+--------+
+    | Average | 42.47% | 31.25% | 63.63% |
+    +---------+--------+--------+--------+
+    ```
+
+* Parámetro **`[ExcludeFromCodeCoverage]`** para exluir métodos o clases específicas del análisis de cobertura, como en este caso:
+
+    ```csharp
+    using System.Diagnostics.CodeAnalysis;
+
+    namespace TextTest;
+
+    [ExcludeFromCodeCoverage]
+    class ClassTest
+    {
+        public void Method1()
+        {
+
+        }
+
+        public void Method2()
+        {
+
+        }
+    }
+    ```
+
+    Y ya cuando se corre el mismo comando: `dotnet test /p:CollectCoverage=true`
+
+    Obtenemos un mayor porcentaje de cobertura:
+
+    ```shell
+    Calculating coverage result...
+      Generating report 'C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\UnitTests.TextManager\TextManager.Tests\coverage.json'
+
+    +-------------+--------+--------+--------+
+    | Module      | Line   | Branch | Method |
+    +-------------+--------+--------+--------+
+    | TextManager | 56.47% | 41.66% | 77.77% |
+    +-------------+--------+--------+--------+
+
+    +---------+--------+--------+--------+
+    |         | Line   | Branch | Method |
+    +---------+--------+--------+--------+
+    | Total   | 56.47% | 41.66% | 77.77% |
+    +---------+--------+--------+--------+
+    | Average | 56.47% | 41.66% | 77.77% |
+    +---------+--------+--------+--------+
+    
+    ```
+
+    Si se quiere especificar el atributo que permite excluir, o si se crea un atributo propio, se usa el comando más explicitamente así: 
+
+    ```shell
+    dotnet test /p:CollectCoverage=true /p:ExcludeByAttribute="ExcludeFromCodeCoverage"
+    ```
+
+    Obteniendo el mismo resultado anterior
+
+* Sobre el reporte de cobertura:
+    Comando que permite generarlo en el formato cobertura que devuelve algo visualmente diferente en xml:
+
+    ```shell
+    dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+    ```

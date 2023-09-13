@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -183,6 +184,7 @@ public class TextManager
     /// <param name="strWord">word to find</param>
     /// <param name="bolIgnoreUppercaseLowercase">Indicates when to ignore case.</param>
     /// <returns>Match property width find or null if not find</returns>
+    [ExcludeFromCodeCoverage]
     public List<Match> FindWordRepeatedContinue(string strWord, bool bolIgnoreUppercaseLowercase)
     {
         // Define a regular expression for repeated words.
@@ -219,6 +221,7 @@ public class TextManager
     /// find number words repeated continuos in text 
     /// </summary>
     /// <returns>Match property width find or null if not find</returns>
+    [ExcludeFromCodeCoverage]
     public MatchCollection FindWordAllRepeatedContinue()
     {
         // Define a regular expression for repeated words.
