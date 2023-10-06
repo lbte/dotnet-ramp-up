@@ -8,8 +8,8 @@
         SumNumbers("2,4,5,8,10");
 
         // example
-        var phrase = CurrencyToWord(85000, string.Empty);
-        Console.WriteLine($"\n85000: {phrase}");
+        // var phrase = CurrencyToWord(85000, string.Empty);
+        // Console.WriteLine($"\n85000: {phrase}");
 
         string inputSalary;
         do
@@ -104,28 +104,33 @@
     #endregion
 
     #region Challenge2
-    static int CalculateSalary(int salaryByHour, int workedHours)
+    static dynamic CalculateSalary(dynamic salaryByHour, dynamic workedHours)
     {
-        Console.WriteLine("\n----Entered Int calculation----");
         return salaryByHour * workedHours;
     }
+    
+    // static int CalculateSalary(int salaryByHour, int workedHours)
+    // {
+    //     Console.WriteLine("\n----Entered Int calculation----");
+    //     return salaryByHour * workedHours;
+    // }
 
-    static decimal CalculateSalary(decimal salaryByHour, int workedHours)
-    {
-        Console.WriteLine("\n----Entered Decimal calculation----");
-        return salaryByHour * workedHours;
-    }
+    // static decimal CalculateSalary(decimal salaryByHour, int workedHours)
+    // {
+    //     Console.WriteLine("\n----Entered Decimal calculation----");
+    //     return salaryByHour * workedHours;
+    // }
 
-    static float CalculateSalary(float salaryByHour, int workedHours)
-    {
-        Console.WriteLine("\n----Entered Float calculation----");
-        return salaryByHour * workedHours;
-    }
+    // static float CalculateSalary(float salaryByHour, int workedHours)
+    // {
+    //     Console.WriteLine("\n----Entered Float calculation----");
+    //     return salaryByHour * workedHours;
+    // }
 
-    static double CalculateSalary(double salaryByHour, int workedHours)
-    {
-        Console.WriteLine("\n----Entered Double calculation----");
-        return salaryByHour * workedHours;
-    }
+    // static double CalculateSalary(double salaryByHour, int workedHours)
+    // {
+    //     Console.WriteLine("\n----Entered Double calculation----");
+    //     return salaryByHour * workedHours;
+    // }
     #endregion
 }

@@ -16,7 +16,7 @@
 
 class Program
 {
-    static string filePath = @"C:\Users\laura.bustamanteh\Downloads\dotnet-ramp-up\PRFTLatam.DeveloperSalaryCalculator\developers.csv";
+    static string filePath = "./developers.csv";
 
     static void Main()
     {

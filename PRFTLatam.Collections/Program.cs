@@ -31,12 +31,12 @@ void PrintNames(List<string> names)
     }
 
     Console.WriteLine("\nNames and Remove:");
-    while (names.Count > 0)
+    while (names.Any())
     {
         Console.WriteLine(names[0]);
         names.RemoveAt(0);
     }
 
     names.Clear();
-    Console.WriteLine($"\nNames is empty? {(names.Count == 0)}");
+    Console.WriteLine($"\nNames is empty? {(!names.Any())}");
 }

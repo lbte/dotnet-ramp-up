@@ -14,8 +14,6 @@ public class Program
 
         var summary = BenchmarkRunner.Run<StringOperations>();
     }
-
-    
 }
 
 [MemoryDiagnoser, RankColumn]
